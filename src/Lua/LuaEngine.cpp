@@ -21,28 +21,13 @@ limitations under the License.
 
 #include <iostream>
 #include <functional>
-
-#include <ctools/Logger.h>
-#include <ctools/FileHelper.h>
-#include <Helper/Messaging.h>
-#include <Engine/Log/LogEngine.h>
-#include <Engine/Graphs/GraphView.h>
-#include <Panes/GraphListPane.h>
-#include <Panes/LogPaneSecondView.h>
 #include <lua.hpp>
-
-#include <Engine/DB/DBEngine.h>
-#include <Project/ProjectFile.h>
-
-#include <Panes/ToolPane.h>
-#include <Panes/LogPane.h>
 
 ///////////////////////////////////////////////////
 /// STATIC ////////////////////////////////////////
 ///////////////////////////////////////////////////
 
 static size_t source_file_id = 0U;
-static SourceFileWeak source_file_parent;
 
 ///////////////////////////////////////////////////
 /// CUSTOM LUA FUNCTIONS //////////////////////////
@@ -66,7 +51,7 @@ static int lua_int_print_args(lua_State* L)
         lua_settop(L, -(n)-1);
     }
     res += '\n';
-    LogVarLightInfo("%s", res.c_str());
+    printf("%s\n", res.c_str());
     return 0; // return 0 item
 }
 
@@ -90,7 +75,7 @@ static int Lua_void_SetInfos_string(lua_State* L)
 
     if (res.empty())
     {
-        LogVarLightError("%s", "Lua error : string passed to SetInfos is empty");
+        printf("Lua error : string passed to SetInfos is empty\n");
     }
     else
     {
@@ -107,7 +92,7 @@ static int Lua_void_SetRowBufferName_string(lua_State* L)
 
     if (res.empty())
     {
-        LogVarLightError("%s", "Lua error : string passed to SetBufferName is empty");
+        printf("Lua error : string passed to SetBufferName is empty\n");
     }
     else
     {
@@ -124,7 +109,7 @@ static int Lua_void_SetFunctionForEachRow_string(lua_State* L)
 
     if (res.empty())
     {
-        LogVarLightError("%s", "Lua error : string passed to SetFunctionForEachLine is empty");
+        printf("Lua error : string passed to SetFunctionForEachLine is empty\n");
     }
     else
     {
@@ -141,7 +126,7 @@ static int Lua_void_SetFunctionForEndFile_string(lua_State* L)
 
     if (res.empty())
     {
-        LogVarLightError("%s", "Lua error : string passed to SetFunctionForEachLine is empty");
+        printf("Lua error : string passed to SetFunctionForEachLine is empty\n");
     }
     else
     {
@@ -178,11 +163,11 @@ static int Lua_void_LogInfo_string(lua_State* L)
 
     if (res.empty())
     {
-        LogVarLightError("%s", "Lua code error : the string passed to LogInfo is empty");
+        printf("Lua code error : the string passed to LogInfo is empty\n");
     }
     else
     {
-        LogVarLightInfo("%s", res.c_str());
+        printf("%s\n", res.c_str());
     }
 
     return 0; // return 0 item
@@ -195,11 +180,11 @@ static int Lua_void_LogWarning_string(lua_State* L)
 
     if (res.empty())
     {
-        LogVarLightError("%s", "Lua code error : the string passed to LogWarning is empty");
+        printf("Lua code error : the string passed to LogWarning is empty\n");
     }
     else
     {
-        LogVarLightWarning("%s", res.c_str());
+        printf("%s\n", res.c_str());
     }
 
     return 0; // return 0 item
@@ -212,11 +197,11 @@ static int Lua_void_LogError_string(lua_State* L)
 
     if (res.empty())
     {
-        LogVarLightError("%s", "Lua code error : the string passed to LogError is empty");
+        printf("Lua code error : the string passed to LogError is empty\n");
     }
     else
     {
-        LogVarLightError("%s", res.c_str());
+        printf("%s\n", res.c_str());
     }
 
     return 0; // return 0 item
@@ -233,11 +218,11 @@ static int Lua_void_AddSignalValue_category_name_date_value(lua_State* L)
 
     if (arg_0_category.empty() || arg_1_name.empty())
     {
-        LogVarLightError("%s", "Lua code error : the category or/and name passed to AddSignalValue are empty");
+        printf("Lua code error : the category or/and name passed to AddSignalValue are empty\n");
     }
     else
     {
-        DBEngine::Instance()->AddSignalTick((SourceFileID)source_file_id, arg_0_category, arg_1_name, arg_2_date, arg_3_value);
+        // code here
     }
 
     return 0; // return 0 item
@@ -257,14 +242,11 @@ static int Lua_void_AddSignalTag_date_color_name_help(lua_State* L)
 
     if (arg_6_name.empty())
     {
-        LogVarLightError("%s", "Lua code error : the string passed to LogValue is empty");
+        printf("Lua code error : the string passed to LogValue is empty\n");
     }
     else
     {
-        auto color = ImVec4(
-            (float)arg_2_color_r, (float)arg_3_color_g,
-            (float)arg_4_color_b, (float)arg_5_color_a);
-        DBEngine::Instance()->AddSignalTag(arg_1_date, color, arg_6_name, arg_7_help);
+        // code here
     }
 
     return 0; // return 0 item
@@ -281,11 +263,11 @@ static int Lua_void_AddSignalStartZone_category_name_date_string(lua_State* L)
 
     if (arg_0_category.empty() || arg_1_name.empty())
     {
-        LogVarLightError("%s", "Lua code error : the category or/and name passed to AddSignalStartZone are empty");
+        printf("Lua code error : the category or/and name passed to AddSignalStartZone are empty\n");
     }
     else
     {
-        DBEngine::Instance()->AddSignalStatus((SourceFileID)source_file_id, arg_0_category, arg_1_name, arg_2_date, arg_3_string, LuaEngine::sc_START_ZONE);
+        // code here
     }
 
     return 0; // return 0 item
@@ -302,11 +284,11 @@ static int Lua_void_AddSignalEndZone_category_name_date_string(lua_State* L)
 
     if (arg_0_category.empty() || arg_1_name.empty())
     {
-        LogVarLightError("%s", "Lua code error : the category or/and name passed to AddSignalEndZone are empty");
+        printf("Lua code error : the category or/and name passed to AddSignalEndZone are empty\n");
     }
     else
     {
-        DBEngine::Instance()->AddSignalStatus((SourceFileID)source_file_id, arg_0_category, arg_1_name, arg_2_date, arg_3_string, LuaEngine::sc_END_ZONE);
+        // code here
     }
 
     return 0; // return 0 item
@@ -323,45 +305,11 @@ static int Lua_void_AddSignalStatus_category_name_date_string(lua_State* L)
 
     if (arg_0_category.empty() || arg_1_name.empty())
     {
-        LogVarLightError("%s", "Lua code error : the category or/and name passed to AddSignalStatus are empty");
+        printf("Lua code error : the category or/and name passed to AddSignalStatus are empty\n");
     }
     else
     {
-        DBEngine::Instance()->AddSignalStatus((SourceFileID)source_file_id, arg_0_category, arg_1_name, arg_2_date, arg_3_string, "");
-    }
-
-    return 0; // return 0 item
-}
-
-// number GetEpochTime(date_time, hour_offset)
-// date_time is in format "YYYY-MM-DD HH:MM:SS,MS" or "YYYY-MM-DD HH:MM:SS.MS"
-static int Lua_number_GetEpochTimeFrom_date_time_string_offset_int(lua_State* L)
-{
-    // params from stack
-    const auto arg_0_datetime = get_lua_secure_string(L, 1);
-    const auto arg_1_offset = lua_tonumber(L, 2);
-    if (!arg_0_datetime.empty())
-    {
-        std::tm date_heure = {};
-        double millisecondes = 0;
-
-        std::stringstream ss(arg_0_datetime);
-        ss >> std::get_time(&date_heure, "%Y-%m-%d %H:%M:%S");
-        if (ss.peek() == ',' || ss.peek() == '.')
-        {
-            ss.ignore();
-            ss >> millisecondes;
-        }
-
-        // temporaire
-        date_heure.tm_hour += (int)arg_1_offset;
-
-        std::time_t temps_epoch = std::mktime(&date_heure);
-        double time_number = temps_epoch + millisecondes / 1000;
-
-        lua_pushnumber(L, time_number);
-
-        return 1; // return 1 item
+        // code here
     }
 
     return 0; // return 0 item
@@ -390,7 +338,6 @@ static lua_State* CreateLuaState()
         lua_register(lua_state_ptr, "AddSignalValue", Lua_void_AddSignalValue_category_name_date_value);
         lua_register(lua_state_ptr, "AddSignalStartZone", Lua_void_AddSignalStartZone_category_name_date_string);
         lua_register(lua_state_ptr, "AddSignalEndZone", Lua_void_AddSignalEndZone_category_name_date_string);
-        lua_register(lua_state_ptr, "GetEpochTime", Lua_number_GetEpochTimeFrom_date_time_string_offset_int);
         lua_register(lua_state_ptr, "AddSignalTag", Lua_void_AddSignalTag_date_color_name_help);
         lua_register(lua_state_ptr, "AddSignalStatus", Lua_void_AddSignalStatus_category_name_date_string);
     }
@@ -432,8 +379,10 @@ void LuaEngine::sLuAnalyse(
     const int64_t firstTimeMark = std::chrono::duration_cast<std::chrono::milliseconds>
         (std::chrono::system_clock::now().time_since_epoch()).count();
     
+    /*
     const auto& luaFilePathName = LuaEngine::Instance()->GetLuaFilePathName();
     const auto& source_files_ref = LuaEngine::Instance()->GetSourceFilePathNamesRef();
+    */
 
     std::string lua_Current_Buffer_Row_Var_Name;		// current line of buffer
     std::string lua_Function_To_Call_For_Each_Row;	    // the function to call for each lines
@@ -441,7 +390,7 @@ void LuaEngine::sLuAnalyse(
     int32_t lua_Row_Index = 0;					        // the current line pos read from file
     int32_t lua_Row_Count = 0;					        // the current line pos read from file
 
-    auto _luaState = CreateLuaState();
+    /*auto _luaState = CreateLuaState();
     if (_luaState)
     {
         if (!luaFilePathName.empty())
@@ -556,14 +505,14 @@ void LuaEngine::sLuAnalyse(
         }
 
        DestroyLuaState(_luaState);
-    }
+    }*/
 
     vWorking = false;
 }
 
 void LuaEngine::sSetLuaBufferVarContent(lua_State* vLuaState, const std::string& vVarName, const std::string& vContent)
 {
-    if (!vVarName.empty() && !vContent.empty())
+    /*if (!vVarName.empty() && !vContent.empty())
     {
         auto _cont = vContent;
         if (_cont.find('\"') != std::string::npos)
@@ -572,7 +521,7 @@ void LuaEngine::sSetLuaBufferVarContent(lua_State* vLuaState, const std::string&
         }
         const string str = vVarName + " = \"" + _cont + "\"";
         luaL_dostring(vLuaState, str.c_str());
-    }
+    }*/
 }
 
 ///////////////////////////////////////////////////
@@ -582,7 +531,6 @@ void LuaEngine::sSetLuaBufferVarContent(lua_State* vLuaState, const std::string&
 void LuaEngine::Clear()
 {
     m_LuaFilePathName.clear();
-    m_SourceFilePathNames.clear();
 }
 
 bool LuaEngine::Init()
@@ -602,7 +550,7 @@ bool LuaEngine::ExecScriptCode(const std::string& vCode, std::string& vErrors)
     {
         vErrors = get_lua_secure_string(m_LuaStatePtr, -1);
 
-        LogVarLightError("%s", vErrors.c_str());
+        printf("%s\n", vErrors.c_str());
 
         return false;
     }
@@ -673,11 +621,11 @@ int32_t LuaEngine::GetRowCount() const
 void LuaEngine::SetLuaFilePathName(const std::string& vFilePathName)
 {
     m_LuaFilePathName = vFilePathName;
-    auto ps = FileHelper::Instance()->ParsePathFileName(m_LuaFilePathName);
+    /*auto ps = FileHelper::Instance()->ParsePathFileName(m_LuaFilePathName);
     if (ps.isOk)
     {
         m_LuaFileName = ps.name + "." + ps.ext;
-    }
+    }*/
 }
 
 std::string LuaEngine::GetLuaFilePathName()
@@ -690,39 +638,6 @@ std::string LuaEngine::GetLuaFileName()
     return m_LuaFileName;
 }
 
-void LuaEngine::AddSourceFilePathName(const std::string& vFilePathName)
-{
-    auto ps = FileHelper::Instance()->ParsePathFileName(vFilePathName);
-    if (ps.isOk)
-    {
-        m_SourceFilePathNames.emplace_back(ps.GetFPNE_WithPath(""), vFilePathName);
-    }
-}
-
-std::vector<std::pair<SourceFileName, SourceFilePathName>>& LuaEngine::GetSourceFilePathNamesRef()
-{
-    return m_SourceFilePathNames;
-}
-
-void LuaEngine::AddSignalValue(
-    const SignalCategory& vCategory, 
-    const SignalName& vName, 
-    const SignalEpochTime& vDate, 
-    const SignalValue& vValue)
-{
-    LogEngine::Instance()->AddSignalTick(source_file_parent, vCategory, vName, vDate, vValue);
-}
-
-void LuaEngine::AddSignalStatus(
-    const SignalCategory& vCategory, 
-    const SignalName& vName, 
-    const SignalEpochTime& vDate, 
-    const SignalString& vString,
-    const SignalStatus& vStatus)
-{
-    LogEngine::Instance()->AddSignalStatus(source_file_parent, vCategory, vName, vDate, vString, vStatus);
-}
-
 ///////////////////////////////////////////////////////
 //// THREAD ///////////////////////////////////////////
 ///////////////////////////////////////////////////////
@@ -731,16 +646,6 @@ void LuaEngine::StartWorkerThread(const bool& vFirstLoad)
 {
     if (!StopWorkerThread())
     {
-        if (!vFirstLoad)
-        {
-            LogEngine::Instance()->PrepareForSave();
-        }
-
-        LogEngine::Instance()->Clear();
-        GraphView::Instance()->Clear();
-        ToolPane::Instance()->Clear();
-        LogPane::Instance()->Clear();
-
         LuaEngine::s_Working = true;
 
         m_WorkerThread =
@@ -783,66 +688,9 @@ bool LuaEngine::FinishIfRequired()
         if (!LuaEngine::s_Working)
         {
             Join();
-            LogPane::Instance()->Clear();
-            LogPaneSecondView::Instance()->Clear();
-            GraphListPane::Instance()->UpdateDB();
-            ToolPane::Instance()->UpdateTree();
-            LogEngine::Instance()->PrepareAfterLoad();
+
             return true;
         }
     }
     return false;
-}
-
-///////////////////////////////////////////////////////
-//// CONFIGURATION ////////////////////////////////////
-///////////////////////////////////////////////////////
-
-std::string LuaEngine::getXml(const std::string& vOffset, const std::string& vUserDatas)
-{
-    UNUSED(vUserDatas);
-
-    std::string str;
-
-    str += vOffset + "<lua_file>" + m_LuaFilePathName + "</lua_file>\n";
-    str += vOffset + "<log_files>\n";
-    auto& container_ref = LuaEngine::Instance()->GetSourceFilePathNamesRef();
-    for (const auto& source_file : container_ref)
-    {
-        str += vOffset + "\t<log_file>" + escapeXmlCode(source_file.second) + "</log_file>\n";
-    }
-    str += vOffset + "</log_files>\n";
-
-    return str;
-}
-
-bool LuaEngine::setFromXml(tinyxml2::XMLElement* vElem, tinyxml2::XMLElement* vParent, const std::string& vUserDatas)
-{
-    UNUSED(vUserDatas);
-
-    // The value of this child identifies the name of this element
-    std::string strName;
-    std::string strValue;
-    std::string strParentName;
-
-    strName = vElem->Value();
-    if (vElem->GetText())
-        strValue = vElem->GetText();
-    if (vParent != 0)
-        strParentName = vParent->Value();
-
-    if (strName == "lua_file")
-    {
-        SetLuaFilePathName(strValue);
-    }
-
-    if (strParentName == "log_files")
-    {
-        if (strName == "log_file")
-        {
-            LuaEngine::Instance()->AddSourceFilePathName(unEscapeXmlCode(strValue));
-        }
-    }
-
-    return true;
 }

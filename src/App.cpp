@@ -1,13 +1,21 @@
 ﻿#include "App.h"
+
+#include <stdio.h>
+
+#include <glad/glad.h> 
+#include <GLFW/glfw3.h>
 #include <imgui/imgui.h>
 #include <imgui/backends/imgui_impl_opengl3.h>
 #include <imgui/backends/imgui_impl_glfw.h>
-#include <stdio.h>
-#include <glad/glad.h> 
-#include <GLFW/glfw3.h>
 
-#define LUA_PILOTED_APPNAME "LuaPilotedApp"
-#define LUA_PILOTED_APP_VERSION_ID "0.0.1"
+#include <Contrib/FontIcons/CustomFont.cpp>
+#include <Contrib/FontIcons/CustomFont2.cpp>
+#include <Contrib/FontIcons/CustomFontToolBar.cpp>
+#include <Contrib/FontIcons/Roboto_Medium.cpp>
+
+#include <Gui/MainFrame.h>
+#include <Headers/Globals.h>
+#include <Lua/LuaEngine.h>
 
 //////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////
@@ -18,7 +26,7 @@ static void glfw_error_callback(int error, const char* description)
 	printf("Glfw Error %d: %s\n", error, description);
 }
 
-bool App::init(const int& vArgc, const char**& vArgv)
+bool App::init(const int& vArgc, char** vArgv)
 {
 	printf("-----------\n");
 	printf("[[ %s Beta %s ]]\n", LUA_PILOTED_APPNAME, LUA_PILOTED_APP_VERSION_ID);
@@ -37,7 +45,7 @@ bool App::init(const int& vArgc, const char**& vArgv)
 	glfwWindowHint(GLFW_SAMPLES, 4);
 
 	// Create window with graphics context
-	main_win_ptr = glfwCreateWindow(1280, 720, LUA_PILOTED_APPNAME, nullptr, nullptr);
+	auto main_win_ptr = glfwCreateWindow(1280, 720, LUA_PILOTED_APPNAME, nullptr, nullptr);
 	if (!main_win_ptr)
 		return false;
 
@@ -54,7 +62,7 @@ bool App::init(const int& vArgc, const char**& vArgv)
 	ImGui::CreateContext();
 
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
-	//io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
+	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
 	//io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Viewport
 	io.FontAllowUserScaling = true; // activate zoom feature with ctrl + mousewheel
 #ifdef USE_DECORATIONS_FOR_RESIZE_CHILD_WINDOWS
@@ -84,12 +92,16 @@ bool App::init(const int& vArgc, const char**& vArgv)
 	static const ImWchar icons_ranges3[] = { ICON_MIN_NDPTB, ICON_MAX_NDPTB, 0 };
 	fonts_ptr->AddFontFromMemoryCompressedBase85TTF(FONT_ICON_BUFFER_NAME_NDPTB, 15.0f, &icons_config, icons_ranges3);
 
-	MainFrame::Instance(mainWindow)->Init();
+	return MainFrame::Instance(main_win_ptr)->init();
+}
 
-	// Main loop
+void App::run()
+{
+	auto main_win_ptr = MainFrame::Instance()->GetGLFWwindow();
+
 	int display_w, display_h;
 	ImVec2 pos, size;
-	while (!glfwWindowShouldClose(mainWindow))
+	while (!glfwWindowShouldClose(main_win_ptr))
 	{
 #ifndef _DEBUG
 		if (!LuaEngine::Instance()->IsJoinable()) // for not blocking threading progress bar animation
@@ -97,15 +109,16 @@ bool App::init(const int& vArgc, const char**& vArgv)
 			glfwWaitEventsTimeout(1.0);
 		}
 #endif
+
 		glfwPollEvents();
 
-		glfwGetFramebufferSize(mainWindow, &display_w, &display_h);
+		glfwGetFramebufferSize(main_win_ptr, &display_w, &display_h);
 
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 
-		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+		if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
 		{
 			ImGuiViewport* viewport = ImGui::GetMainViewport();
 			if (viewport)
@@ -120,7 +133,7 @@ bool App::init(const int& vArgc, const char**& vArgv)
 			size = ImVec2((float)display_w, (float)display_h);
 		}
 
-		MainFrame::Instance()->Display(pos, size);
+		MainFrame::Instance()->display(pos, size);
 
 		LuaEngine::Instance()->FinishIfRequired();
 
@@ -133,242 +146,6 @@ bool App::init(const int& vArgc, const char**& vArgv)
 		// Update and Render additional Platform Windows
 		// (Platform functions may change the current OpenGL context, so we save/restore it to make it easier to paste this code elsewhere.
 		// For this specific demo app we could also call glfwMakeContextCurrent(window) directly)
-		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-		{
-			GLFWwindow* backup_current_context = glfwGetCurrentContext();
-			ImGui::UpdatePlatformWindows();
-			ImGui::RenderPlatformWindowsDefault();
-			glfwMakeContextCurrent(backup_current_context);
-		}
-
-		glfwSwapBuffers(mainWindow);
-	}
-
-	MainFrame::Instance()->Unit();
-
-	ImGui_ImplOpenGL3_Shutdown();
-	ImGui_ImplGlfw_Shutdown();
-
-	ImPlot::DestroyContext();
-	ImGui::DestroyContext();
-
-	glfwDestroyWindow(mainWindow);
-	glfwTerminate();
-
-	return 0;
-}
-
-void App::run()
-{
-
-}
-
-bool App::unit()
-{
-
-}
-
-int App::Run(const std::string& vAppPath)
-{
-	ZoneScoped;
-
-	printf("-----------\n");
-	printf("[[ Lumo Beta %s ]]\n", Lumo_BuildId);
-
-	FileHelper::Instance()->SetAppPath(vAppPath);
-	FileHelper::Instance()->SetCurDirectory(FileHelper::Instance()->GetAppPath());
-
-#ifdef _DEBUG
-	FileHelper::Instance()->CreateDirectoryIfNotExist("debug");
-#endif
-
-	FileHelper::Instance()->CreateDirectoryIfNotExist("plugins");
-	FileHelper::Instance()->CreateDirectoryIfNotExist("shaders");
-	FileHelper::Instance()->CreateDirectoryIfNotExist("projects");
-
-	m_VulkanWindowPtr = vkApi::VulkanWindow::Create(WIDTH, HEIGHT, PROJECT_NAME " beta", false);
-	if (m_VulkanWindowPtr)
-	{
-		const auto& main_window = m_VulkanWindowPtr->getWindowPtr();
-		if (Init(main_window))
-		{
-			MainLoop(main_window);
-			Unit(main_window);
-		}
-
-		m_VulkanWindowPtr->Unit();
-		m_VulkanWindowPtr.reset();
-	}
-
-	return 0;
-}
-
-bool App::Init(GLFWwindow* vWindow)
-{
-	ZoneScoped;
-
-	bool res = false;
-
-	// Setup Vulkan
-	if (glfwVulkanSupported())
-	{
-		InitFilesTracker(
-			std::bind(&App::UpdateFiles, this, std::placeholders::_1),
-			std::list<std::string>{ "projects", "shaders" });
-
-		// Core
-		vkApi::VulkanCore::sVulkanShader = VulkanShader::Create();
-		if (vkApi::VulkanCore::sVulkanShader)
-		{
-			bool _use_RTX = true;
-
-			m_VulkanCorePtr = vkApi::VulkanCore::Create(m_VulkanWindowPtr, "Lumo", 1, "Lumo Engine", 1, true, _use_RTX);
-			if (m_VulkanCorePtr)
-			{
-				// apres la creation du core
-				CommonSystem::Instance()->CreateBufferObject(m_VulkanCorePtr);
-
-				m_VulkanImGuiOverlayPtr = vkApi::VulkanImGuiOverlay::Create(
-					m_VulkanCorePtr, m_VulkanWindowPtr); // needed for alloc ImGui Textures
-
-				View3DPane::Instance()->SetVulkanImGuiRenderer(m_VulkanImGuiOverlayPtr->GetImGuiRenderer());
-				View2DPane::Instance()->SetVulkanImGuiRenderer(m_VulkanImGuiOverlayPtr->GetImGuiRenderer());
-
-				ImGui::CustomStyle::Instance();
-
-				// on charge les plugins
-				PluginManager::Instance()->LoadPlugins(m_VulkanCorePtr);
-
-				NodeManager::Instance()->Init(m_VulkanCorePtr);
-
-				// apres les autres, car on charge le fichier projet
-				MainFrame::Instance(vWindow)->Init();
-
-#ifdef USE_THUMBNAILS
-				ImGuiFileDialog::Instance()->SetCreateThumbnailCallback([this](IGFD_Thumbnail_Info* vThumbnail_Info)
-					{
-						if (vThumbnail_Info &&
-							vThumbnail_Info->isReadyToUpload &&
-							vThumbnail_Info->textureFileDatas)
-						{
-							m_VulkanCorePtr->getDevice().waitIdle();
-
-							std::shared_ptr<FileDialogAsset> resPtr = std::shared_ptr<FileDialogAsset>(new FileDialogAsset,
-								[](FileDialogAsset* obj)
-								{
-									delete obj;
-								}
-							);
-
-							if (resPtr)
-							{
-								resPtr->texturePtr = Texture2D::CreateFromMemory(
-									m_VulkanCorePtr,
-									vThumbnail_Info->textureFileDatas,
-									vThumbnail_Info->textureWidth,
-									vThumbnail_Info->textureHeight,
-									vThumbnail_Info->textureChannels);
-
-								if (resPtr->texturePtr)
-								{
-									auto imguiRendererPtr = m_VulkanImGuiOverlayPtr->GetImGuiRenderer().getValidShared();
-									if (imguiRendererPtr)
-									{
-										resPtr->descriptorSet = imguiRendererPtr->CreateImGuiTexture(
-											(VkSampler)resPtr->texturePtr->m_DescriptorImageInfo.sampler,
-											(VkImageView)resPtr->texturePtr->m_DescriptorImageInfo.imageView,
-											(VkImageLayout)resPtr->texturePtr->m_DescriptorImageInfo.imageLayout);
-
-										vThumbnail_Info->userDatas = (void*)resPtr.get();
-
-										m_FileDialogAssets.push_back(resPtr);
-
-										vThumbnail_Info->textureID = (ImTextureID)&resPtr->descriptorSet;
-									}
-
-									delete[] vThumbnail_Info->textureFileDatas;
-									vThumbnail_Info->textureFileDatas = nullptr;
-
-									vThumbnail_Info->isReadyToUpload = false;
-									vThumbnail_Info->isReadyToDisplay = true;
-
-									m_VulkanCorePtr->getDevice().waitIdle();
-								}
-							}
-						}
-					});
-				ImGuiFileDialog::Instance()->SetDestroyThumbnailCallback([this](IGFD_Thumbnail_Info* vThumbnail_Info)
-					{
-						if (vThumbnail_Info)
-						{
-							if (vThumbnail_Info->userDatas)
-							{
-								m_VulkanCorePtr->getDevice().waitIdle();
-
-								auto assetPtr = (FileDialogAsset*)vThumbnail_Info->userDatas;
-								if (assetPtr)
-								{
-									assetPtr->texturePtr.reset();
-									assetPtr->descriptorSet = vk::DescriptorSet{};
-									auto imguiRendererPtr = m_VulkanImGuiOverlayPtr->GetImGuiRenderer().getValidShared();
-									if (imguiRendererPtr)
-									{
-										imguiRendererPtr->DestroyImGuiTexture(&assetPtr->descriptorSet);
-									}
-								}
-
-								m_VulkanCorePtr->getDevice().waitIdle();
-							}
-						}
-					});
-#endif // USE_THUMBNAILS
-
-				vkprof::vkProfiler::Instance()->Init(
-					m_VulkanCorePtr->getPhysicalDevice(),
-					m_VulkanCorePtr->getDevice());
-
-				RenderDocController::Instance()->Init();
-				
-				res = true;
-			}
-		}
-	}
-
-	return res;
-}
-
-void App::MainLoop(GLFWwindow* vWindow)
-{
-	while (!glfwWindowShouldClose(vWindow))
-	{
-		ZoneScoped;
-
-		RenderDocController::Instance()->StartCaptureIfResquested();
-
-		// maintain active, prevent user change via imgui dialog
-		ImGui::GetIO().ConfigFlags |= ImGuiConfigFlags_DockingEnable; // Enable Docking
-		ImGui::GetIO().ConfigFlags &= ~ImGuiConfigFlags_ViewportsEnable; // Disable Viewport
-
-		glfwPollEvents();
-
-		// to absolutly do beofre all vk rendering commands
-		m_VulkanCorePtr->ResetCommandPools();
-
-		Update(); // to do absolutly beofre imgui rendering
-
-		PrepareImGui(ct::ivec4(0, m_VulkanWindowPtr->getWindowResolution()));
-
-		// Merged Rendering
-		bool needResize = false;
-		if (BeginRender(needResize))
-		{
-			m_VulkanImGuiOverlayPtr->render();
-			EndRender();
-		}
-
-		// Update and Render additional Platform Windows
-		// (Platform functions may change the current OpenGL context, so we save/restore it to make it easier to paste this code elsewhere.
-		//  For this specific demo app we could also call glfwMakeContextCurrent(window) directly)
 		if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
 		{
 			GLFWwindow* backup_current_context = glfwGetCurrentContext();
@@ -377,282 +154,23 @@ void App::MainLoop(GLFWwindow* vWindow)
 			glfwMakeContextCurrent(backup_current_context);
 		}
 
-#ifdef USE_THUMBNAILS
-		vkDeviceWaitIdle((VkDevice)m_VulkanCorePtr->getDevice());
-		ImGuiFileDialog::Instance()->ManageGPUThumbnails();
-#endif
-
-		// delete imgui nodes now
-		// like that => no issue with imgui descriptors because after imgui render and before next node computing
-		GraphPane::Instance()->DeleteNodesIfAnys();
-
-		// mainframe post actions
-		MainFrame::Instance()->PostRenderingActions();
-
-		++m_CurrentFrame;
-
-		//will pause the view until we move the mouse
-		//glfwWaitEvents();
-
-		RenderDocController::Instance()->EndCaptureIfResquested();
+		glfwSwapBuffers(main_win_ptr);
 	}
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//// RENDER ////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-bool App::BeginRender(bool& vNeedResize)
+bool App::unit()
 {
-	ZoneScoped;
+	auto main_win_ptr = MainFrame::Instance()->GetGLFWwindow();
 
-	if (m_VulkanCorePtr->AcquireNextImage(m_VulkanWindowPtr))
-	{
-		m_VulkanCorePtr->frameBegin();
+	MainFrame::Instance()->unit();
 
-		auto devicePtr = m_VulkanCorePtr->getFrameworkDevice().getValidShared();
-		if (devicePtr)
-		{
-			auto cmd = m_VulkanCorePtr->getGraphicCommandBuffer();
-			devicePtr->BeginDebugLabel(&cmd, "ImGui", IMGUI_RENDERER_DEBUG_COLOR);
+	ImGui_ImplOpenGL3_Shutdown();
+	ImGui_ImplGlfw_Shutdown();
 
-			{
-				TracyVkZone(m_VulkanCorePtr->getTracyContext(), cmd, "Record Renderer Command buffer");
-			}
+	ImGui::DestroyContext();
 
-			m_VulkanCorePtr->beginMainRenderPass();
+	glfwDestroyWindow(main_win_ptr);
+	glfwTerminate();
 
-			return true;
-		}
-	}
-	else // maybe a resize will fix
-	{
-		vNeedResize = true;
-	}
-
-	return false;
-}
-
-void App::EndRender()
-{
-	ZoneScoped;
-
-	m_VulkanCorePtr->endMainRenderPass();
-
-	auto cmd = m_VulkanCorePtr->getGraphicCommandBuffer();
-	
-	auto devicePtr = m_VulkanCorePtr->getFrameworkDevice().getValidShared();
-	if (devicePtr)
-	{
-		devicePtr->EndDebugLabel(&cmd);
-	}
-
-	{
-		TracyVkCollect(m_VulkanCorePtr->getTracyContext(), cmd);
-	}
-
-	{
-		vkprof::vkProfiler::Instance()->Collect(cmd);
-	}
-
-	m_VulkanCorePtr->frameEnd();
-	m_VulkanCorePtr->Present();
-}
-
-void App::PrepareImGui(ct::ivec4 vViewport)
-{
-	ZoneScoped;
-
-	ImGui::SetPUSHID(125);
-	PluginManager::Instance()->ResetImGuiID(125);
-
-	// ImGui Calc juste avant de rendre dnas la swapchain
-	m_VulkanImGuiOverlayPtr->begin();
-	ImGuizmo::BeginFrame();
-
-	auto io = ImGui::GetIO();
-	if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-	{
-		const auto viewport = ImGui::GetMainViewport();
-		if (viewport)
-		{
-			const auto pos = viewport->WorkPos;
-			const auto size = viewport->WorkSize;
-			vViewport.x = (int)pos.x;
-			vViewport.y = (int)pos.y;
-			vViewport.z = (int)size.x;
-			vViewport.w = (int)size.y;
-		}
-	}
-	else
-	{
-		vViewport.x = 0;
-		vViewport.y = 0;
-	}
-
-	MainFrame::Instance()->Display(m_CurrentFrame, vViewport);
-
-	NodeManager::Instance()->DisplayDialogsAndPopups(m_CurrentFrame, MainFrame::Instance()->m_DisplaySize, ImGui::GetCurrentContext());
-
-	m_VulkanImGuiOverlayPtr->end();
-}
-
-void App::Update()
-{
-	ZoneScoped;
-
-	m_VulkanCorePtr->GetDeltaTime(m_CurrentFrame);
-
-	CommonSystem::Instance()->UploadBufferObjectIfDirty(m_VulkanCorePtr);
-
-	CheckIfTheseAreSomeFileChanges();
-
-	NodeManager::Instance()->Execute(m_CurrentFrame);
-}
-
-void App::IncFrame()
-{
-	++m_CurrentFrame;
-}
-
-vkApi::VulkanWindowPtr App::GetWindowPtr()
-{
-	return m_VulkanWindowPtr;
-}
-
-bool App::Unit(GLFWwindow* vWindow)
-{
-	ZoneScoped;
-
-	UNUSED(vWindow);
-
-	if (m_VulkanCorePtr)
-	{
-		vkDeviceWaitIdle((VkDevice)m_VulkanCorePtr->getDevice());
-	}
-
-	RenderDocController::Instance()->Unit();
-
-	vkprof::vkProfiler::Instance()->Unit();
-
-	m_FileDialogAssets.clear();
-
-	MainFrame::Instance()->Unit(); // detruit tout les panes, dont les nodes
-
-	ProjectFile::Instance()->Clear();
-	NodeManager::Instance()->Unit();
-
-	if (m_VulkanImGuiOverlayPtr)
-	{
-		m_VulkanImGuiOverlayPtr->Unit();
-		m_VulkanImGuiOverlayPtr.reset();
-	}
-
-	CommonSystem::Instance()->DestroyBufferObject();
-
-	PluginManager::Instance()->Clear();
-
-	if (vkApi::VulkanCore::sVulkanShader)
-	{
-		vkApi::VulkanCore::sVulkanShader->Unit();
-		vkApi::VulkanCore::sVulkanShader.reset();
-	}
-
-	if (m_VulkanCorePtr)
-	{
-		m_VulkanCorePtr->Unit();
-		m_VulkanCorePtr.reset();
-	}
-
-	return true;
-}
-
-#define SHADER_PATH 0
-
-void App::AddPathToTrack(std::string vPathToTrack, bool vCreateDirectoryIfNotExist)
-{
-	ZoneScoped;
-
-	if (!vPathToTrack.empty())
-	{
-		if (vCreateDirectoryIfNotExist)
-		{
-			FileHelper::Instance()->CreateDirectoryIfNotExist(vPathToTrack);
-		}
-
-		if (m_PathsToTrack.find(vPathToTrack) == m_PathsToTrack.end()) // non trouv�
-		{
-			m_PathsToTrack.emplace(vPathToTrack);
-			FileHelper::Instance()->puSearchPaths.push_back(vPathToTrack);
-			FilesTrackerSystem::Instance()->addWatch(vPathToTrack);
-		}
-	}
-}
-
-void App::InitFilesTracker(std::function<void(std::set<std::string>)> vChangeFunc, std::list<std::string> vPathsToTrack)
-{
-	ZoneScoped;
-
-	m_ChangeFunc = vChangeFunc;
-
-	for (auto path : vPathsToTrack)
-	{
-		AddPathToTrack(path, true);
-	}
-
-	FilesTrackerSystem::Instance()->Changes = false;
-}
-
-void App::CheckIfTheseAreSomeFileChanges()
-{
-	ZoneScoped;
-
-	FilesTrackerSystem::Instance()->update();
-
-	if (FilesTrackerSystem::Instance()->Changes)
-	{
-		m_ChangeFunc(FilesTrackerSystem::Instance()->files);
-
-		FilesTrackerSystem::Instance()->files.clear();
-
-		FilesTrackerSystem::Instance()->Changes = false;
-	}
-}
-
-void App::UpdateFiles(const std::set<std::string>& vFiles) const
-{
-	ZoneScoped;
-
-	std::set<std::string> res;
-
-	for (auto file : vFiles)
-	{
-		if (file.find(".vert") != std::string::npos ||
-			file.find(".frag") != std::string::npos ||
-			file.find(".tess") != std::string::npos ||
-			file.find(".eval") != std::string::npos ||
-			file.find(".glsl") != std::string::npos ||
-			file.find(".geom") != std::string::npos ||
-			file.find(".scen") != std::string::npos ||
-			file.find(".blue") != std::string::npos ||
-			file.find(".comp") != std::string::npos ||
-			file.find(".rgen") != std::string::npos ||
-			file.find(".rint") != std::string::npos ||
-			file.find(".miss") != std::string::npos ||
-			file.find(".ahit") != std::string::npos ||
-			file.find(".chit") != std::string::npos)
-		{
-			ct::replaceString(file, "\\", "/");
-			res.emplace(file);
-		}
-
-		if (file.find(".lum") != std::string::npos)
-		{
-		}
-	}
-
-	if (!res.empty())
-	{
-		NodeManager::Instance()->UpdateShaders(res);
-	}
+	return 0;
 }

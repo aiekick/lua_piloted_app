@@ -23,10 +23,9 @@ limitations under the License.
 #include <string>
 #include <functional>
 #include <Headers/Globals.h>
-#include <ctools/ConfigAbstract.h>
 
 struct lua_State;
-class LuaEngine : public conf::ConfigAbstract
+class LuaEngine
 {
 public:
 	static std::mutex s_WorkerThread_Mutex;
@@ -58,7 +57,6 @@ private: // thread
 private: // to save
 	std::string m_LuaFilePathName;
 	std::string m_LuaFileName;
-	std::vector<std::pair<SourceFileName,SourceFilePathName>> m_SourceFilePathNames;
 
 public:
 	void Clear();
@@ -90,30 +88,11 @@ public:
 	std::string GetLuaFilePathName();
 	std::string GetLuaFileName();
 
-	void AddSourceFilePathName(const SourceFilePathName& vFilePathName);
-	std::vector<std::pair<SourceFileName, SourceFilePathName>>& GetSourceFilePathNamesRef();
-
-	void AddSignalValue(
-		const SignalCategory& vCategory, 
-		const SignalName& vName, 
-		const SignalEpochTime& vDate, 
-		const SignalValue& vValue);
-	void AddSignalStatus(
-		const SignalCategory& vCategory, 
-		const SignalName& vName, 
-		const SignalEpochTime& vDate, 
-		const SignalString& vString, 
-		const SignalStatus& vStatus);
-
 	void StartWorkerThread(const bool& vFirstLoad);
 	bool StopWorkerThread();
 	bool IsJoinable();
 	void Join();
 	bool FinishIfRequired();
-
-public: // configuration
-	std::string getXml(const std::string& vOffset, const std::string& vUserDatas) override;
-	bool setFromXml(tinyxml2::XMLElement* vElem, tinyxml2::XMLElement* vParent, const std::string& vUserDatas) override;
 
 public: // singleton
 	static std::shared_ptr<LuaEngine> Instance()

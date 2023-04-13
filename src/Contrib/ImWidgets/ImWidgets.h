@@ -18,9 +18,9 @@ limitations under the License.
 
 #include <imgui/imgui.h>
 
-#include <ctools/cTools.h>
-
 #include <cstdint> // types like uint32_t
+#include <vector>
+#include <string>
 
 #ifndef IMGUI_DEFINE_MATH_OPERATORS
 #define IMGUI_DEFINE_MATH_OPERATORS
@@ -31,7 +31,7 @@ limitations under the License.
 
 struct ImGuiWindow;
 #ifdef USE_GLFW3
-struct GLFWWindow;
+struct GLFWwindow;
 #endif // USE_GLFW3
 namespace ImGui
 {
@@ -70,7 +70,7 @@ namespace ImGui
 	IMGUI_API ImVec4 GetGoodOrBadColorForUse(bool vUsed); // return a "good" color if true or "bad" color if false
 
 #ifdef USE_GLFW3
-	IMGUI_API ImVec2 GetLocalMousePos(GLFWWindow* vWin = nullptr); // return local window mouse pos
+	IMGUI_API ImVec2 GetLocalMousePos(GLFWwindow* vWin = nullptr); // return local window mouse pos
 #endif // USE_GLFW3
 
 	IMGUI_API void SetContrastRatio(float vRatio);
@@ -294,14 +294,6 @@ namespace ImGui
 	IMGUI_API bool Selectable_FramedText_Selected(const bool& vSelected, const char* fmt, ...);
 	IMGUI_API bool Selectable_FramedText(const char* fmt, ...);
 
-	void PlotFVec4Histo(
-		const char* vLabel, ct::fvec4* vDatas, int vDataCount,
-		bool* vShowChannel = 0,
-		ImVec2 frame_size = ImVec2(0, 0),
-		ct::fvec4 scale_min = FLT_MAX,
-		ct::fvec4 scale_max = FLT_MAX,
-		int* vHoveredIdx = 0);
-
 	void ImageZoomPoint(ImTextureID vUserTextureId, const float vWidth, const ImVec2& vCenter, const ImVec2& vPoint, const ImVec2& vRadiusInPixels);
 	//void ImageZoomLine(ImTextureID vUserTextureId, const float vWidth, const ImVec2& vStart, const ImVec2& vEnd);
 
@@ -319,8 +311,6 @@ namespace ImGui
 	IMGUI_API bool TransparentButton(const char* label, const ImVec2& size_arg = ImVec2(0, 0), ImGuiButtonFlags flags = 0);
 
 	IMGUI_API void PlainImageWithBG(ImTextureID vTexId, const ImVec2& size, const ImVec4& bg_col, const ImVec4& tint_col);
-
-	IMGUI_API void ImageRatio(ImTextureID vTexId, float vRatioX, float vWidth, ImVec4 vColor, float /*vBorderThick*/);
 
 #ifdef USE_OPENGL
 	// show overlay text on mousehover // l'epaisseur du cadre vient de BorderColor.w

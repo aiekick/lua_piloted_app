@@ -18,7 +18,6 @@ limitations under the License.
 // PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 
 #include "ImWidgets.h"
-#include <ctools/FileHelper.h>
 #include <Contrib/FontIcons/CustomFont.h>
 
 #include <imgui/imgui.h>
@@ -88,7 +87,7 @@ ImVec4 ImGui::GetGoodOrBadColorForUse(bool vUsed)
 // if not called from a ImGui Window, will return ImVec2(0,0)
 // if its your case, you need to set the GLFWwindow
 // no issue withotu viewport
-ImVec2 ImGui::GetLocalMousePos(GLFWWindow* vWin)
+ImVec2 ImGui::GetLocalMousePos(GLFWwindow* vWin)
 {
 #if defined(IMGUI_HAS_VIEWPORT) && defined(GLFW3)
 	if (vWin)
@@ -842,7 +841,7 @@ bool ImGui::RadioButtonLabeled(float vWidth, const char* label, bool active, boo
 	const ImGuiID id = window->GetID(label);
 	const ImVec2 label_size = CalcTextSize(label, nullptr, true);
 	if (w < 0.0f) w = ImGui::GetContentRegionMaxAbs().x - window->DC.CursorPos.x;
-	if (IS_FLOAT_EQUAL(w, 0.0f)) w = label_size.x + style.FramePadding.x * 2.0f;
+	if (fabs(w) > FLT_EPSILON) w = label_size.x + style.FramePadding.x * 2.0f;
 	const ImRect total_bb(window->DC.CursorPos, window->DC.CursorPos + ImVec2(w, label_size.y + style.FramePadding.y * 2.0f));
 
 	ItemSize(total_bb, style.FramePadding.y);
@@ -1197,7 +1196,7 @@ bool ImGui::ClickableTextUrl(const char* label, const char* url, bool vOnlined)
 
 	if (pressed)
 	{
-		FileHelper::Instance()->OpenUrl(url);
+		//FileHelper::Instance()->OpenUrl(url);
 	}
 
 	return pressed;
@@ -1248,7 +1247,7 @@ bool ImGui::ClickableTextFile(const char* label, const char* file, bool vOnlined
 
 	if (pressed)
 	{
-		FileHelper::Instance()->OpenFile(file);
+		//FileHelper::Instance()->OpenFile(file);
 	}
 
 	return pressed;
@@ -1427,8 +1426,9 @@ void ImGui::EndMainStatusBar()
 	// When the user has left the menu layer (typically: closed menus through activation of an item), we restore focus to the previous window
 	// FIXME: With this strategy we won't be able to restore a NULL focus.
 	ImGuiContext& g = *GImGui;
+	ImGuiViewportP* viewport = (ImGuiViewportP*)(void*)GetMainViewport();
 	if (g.CurrentWindow == g.NavWindow && g.NavLayer == ImGuiNavLayer_Main && !g.NavAnyRequest)
-		FocusTopMostWindowUnderOne(g.NavWindow, NULL);
+		FocusTopMostWindowUnderOne(g.NavWindow, NULL, viewport);
 
 	End();
 }
@@ -1518,194 +1518,6 @@ bool ImGui::ToggleContrastedButton(const char* vLabelTrue, const char* vLabelFal
 			ImGui::SetTooltip("%s", vHelp);
 
 	return res;
-}
-
-void ImGui::PlotFVec4Histo(const char* vLabel, ct::fvec4* vDatas, int vDataCount, bool* vShowChannel, ImVec2 frame_size, ct::fvec4 scale_min, ct::fvec4 scale_max, int* vHoveredIdx)
-{
-	ImGuiWindow* window = ImGui::GetCurrentWindow();
-	if (window->SkipItems)
-		return;
-
-	ImGuiContext& g = *GImGui;
-	const ImGuiStyle& style = g.Style;
-	const ImGuiID id = window->GetID(vLabel);
-
-	const ImVec2 label_size = ImGui::CalcTextSize(vLabel, NULL, true);
-	if (IS_FLOAT_EQUAL(frame_size.x, 0.0f))
-		frame_size.x = ImGui::CalcItemWidth();
-	if (IS_FLOAT_EQUAL(frame_size.y, 0.0f))
-		frame_size.y = label_size.y + (style.FramePadding.y * 2);
-
-	const ImRect frame_bb(window->DC.CursorPos, window->DC.CursorPos + frame_size);
-	const ImRect inner_bb(frame_bb.Min + style.FramePadding, frame_bb.Max - style.FramePadding);
-	const ImRect total_bb(frame_bb.Min, frame_bb.Max + ImVec2(label_size.x > 0.0f ? style.ItemInnerSpacing.x + label_size.x : 0.0f, 0));
-	ImGui::ItemSize(total_bb, style.FramePadding.y);
-	if (!ImGui::ItemAdd(total_bb, 0, &frame_bb))
-		return;
-
-	ImGui::PushID(++CustomStyle::Instance()->pushId);
-
-	const bool hovered = ImGui::ItemHoverable(frame_bb, id);
-
-	// Determine scale from values if not specified
-	for (int chan = 0; chan < 4; chan++)
-	{
-		if (IS_FLOAT_EQUAL(scale_min[chan], FLT_MAX) || IS_FLOAT_EQUAL(scale_max[chan], FLT_MAX))
-		{
-			float v_min = FLT_MAX;
-			float v_max = -FLT_MAX;
-			for (int i = 0; i < vDataCount; ++i)
-			{
-				const float v = vDatas[i][chan];
-				v_min = ct::mini(v_min, v);
-				v_max = ct::maxi(v_max, v);
-			}
-			if (scale_min[chan] == FLT_MAX)
-				scale_min[chan] = v_min;
-			if (scale_max[chan] == FLT_MAX)
-				scale_max[chan] = v_max;
-		}
-	}
-
-	ImGui::RenderFrame(frame_bb.Min, frame_bb.Max, ImGui::GetColorU32(ImGuiCol_FrameBg), true, style.FrameRounding);
-
-	const int values_count_min = 2;
-	if (vDataCount >= values_count_min)
-	{
-		int res_w = ct::mini((int)frame_size.x, (int)vDataCount) - 1;
-		int item_count = vDataCount - 1;
-
-		// Tooltip on hover
-		int v_hovered = -1;
-		if (vHoveredIdx)
-			*vHoveredIdx = v_hovered;
-
-		if (hovered && inner_bb.Contains(g.IO.MousePos))
-		{
-			const float t = ImClamp((g.IO.MousePos.x - inner_bb.Min.x) / (inner_bb.Max.x - inner_bb.Min.x), 0.0f, 0.9999f);
-			const int v_idx = (int)(t * item_count);
-			IM_ASSERT(v_idx >= 0 && v_idx < vDataCount);
-
-			const ct::fvec4 v0 = vDatas[v_idx % vDataCount];
-			ImGui::BeginTooltip();
-			if (!vShowChannel || vShowChannel[0])
-			{
-				ImGui::Text("r %d: %8.4g", v_idx, v0.x);
-			}
-			if (!vShowChannel || vShowChannel[1])
-			{
-				ImGui::Text("g %d: %8.4g", v_idx, v0.y);
-			}
-			if (!vShowChannel || vShowChannel[2])
-			{
-				ImGui::Text("b %d: %8.4g", v_idx, v0.z);
-			}
-			if (!vShowChannel || vShowChannel[3])
-			{
-				ImGui::Text("a %d: %8.4g", v_idx, v0.w);
-			}
-			ImGui::EndTooltip();
-			v_hovered = v_idx;
-
-			if (vHoveredIdx)
-				*vHoveredIdx = v_hovered;
-		}
-
-		float t_step = 1.0f / (float)res_w;
-		ct::fvec4 inv_scale;
-		inv_scale.x = (scale_min.x == scale_max.x) ? 0.0f : (1.0f / (scale_max.x - scale_min.x));
-		inv_scale.y = (scale_min.y == scale_max.y) ? 0.0f : (1.0f / (scale_max.y - scale_min.y));
-		inv_scale.z = (scale_min.z == scale_max.z) ? 0.0f : (1.0f / (scale_max.z - scale_min.z));
-		inv_scale.w = (scale_min.w == scale_max.w) ? 0.0f : (1.0f / (scale_max.w - scale_min.w));
-
-		const ct::fvec4 v0 = (vDatas[0] - scale_min) * inv_scale;
-		ct::fvec4 yt0;
-		yt0.x = 1.0f - ct::clamp(v0.x);
-		yt0.y = 1.0f - ct::clamp(v0.y);
-		yt0.z = 1.0f - ct::clamp(v0.z);
-		yt0.w = 1.0f - ct::clamp(v0.w);
-		float xt0 = 0.0f;
-
-		ct::fvec4 histogram_zero_line_t;
-		histogram_zero_line_t.x = (scale_min.x * scale_max.x < 0.0f) ? (-scale_min.x * inv_scale.x) : (scale_min.x < 0.0f ? 0.0f : 1.0f); // Where does the zero line stands
-		histogram_zero_line_t.y = (scale_min.y * scale_max.y < 0.0f) ? (-scale_min.y * inv_scale.y) : (scale_min.y < 0.0f ? 0.0f : 1.0f); // Where does the zero line stands
-		histogram_zero_line_t.z = (scale_min.z * scale_max.z < 0.0f) ? (-scale_min.z * inv_scale.z) : (scale_min.z < 0.0f ? 0.0f : 1.0f); // Where does the zero line stands
-		histogram_zero_line_t.w = (scale_min.w * scale_max.w < 0.0f) ? (-scale_min.w * inv_scale.w) : (scale_min.w < 0.0f ? 0.0f : 1.0f); // Where does the zero line stands
-
-		for (int n = 0; n < res_w; n++)
-		{
-			float xt1 = xt0 + t_step;
-			int v1_idx = (int)(xt0 * item_count + 0.5f);
-			IM_ASSERT(v1_idx >= 0 && v1_idx < vDataCount);
-			const ct::fvec4 v1 = (vDatas[(v1_idx + 1) % vDataCount] - scale_min) * inv_scale;
-			ct::fvec4 yt1;// = 1.0f - ct::clamp(v1);
-			yt1.x = 1.0f - ct::clamp(v1.x);
-			yt1.y = 1.0f - ct::clamp(v1.y);
-			yt1.z = 1.0f - ct::clamp(v1.z);
-			yt1.w = 1.0f - ct::clamp(v1.w);
-
-			if (!vShowChannel || vShowChannel[0])
-			{
-				ImVec2 p0x = ImLerp(inner_bb.Min, inner_bb.Max, ImVec2(xt0, yt0.x));
-				ImVec2 p1x = ImLerp(inner_bb.Min, inner_bb.Max, ImVec2(xt1, yt1.x));
-				window->DrawList->AddLine(p0x, p1x, ImGui::GetColorU32(ImVec4(1, 0, 0, 1)));
-			}
-
-			if (!vShowChannel || vShowChannel[1])
-			{
-				ImVec2 p0y = ImLerp(inner_bb.Min, inner_bb.Max, ImVec2(xt0, yt0.y));
-				ImVec2 p1y = ImLerp(inner_bb.Min, inner_bb.Max, ImVec2(xt1, yt1.y));
-				window->DrawList->AddLine(p0y, p1y, ImGui::GetColorU32(ImVec4(0, 1, 0, 1)));
-			}
-
-			if (!vShowChannel || vShowChannel[2])
-			{
-				ImVec2 p0z = ImLerp(inner_bb.Min, inner_bb.Max, ImVec2(xt0, yt0.z));
-				ImVec2 p1z = ImLerp(inner_bb.Min, inner_bb.Max, ImVec2(xt1, yt1.z));
-				window->DrawList->AddLine(p0z, p1z, ImGui::GetColorU32(ImVec4(0, 0, 1, 1)));
-			}
-
-			if (!vShowChannel || vShowChannel[3])
-			{
-				ImVec2 p0w = ImLerp(inner_bb.Min, inner_bb.Max, ImVec2(xt0, yt0.w));
-				ImVec2 p1w = ImLerp(inner_bb.Min, inner_bb.Max, ImVec2(xt1, yt1.w));
-				window->DrawList->AddLine(p0w, p1w, ImGui::GetColorU32(ImVec4(1, 1, 1, 1)));
-			}
-
-			xt0 = xt1;
-			yt0 = yt1;
-		}
-
-		if (!vShowChannel || vShowChannel[0])
-		{
-			float y = ImLerp(inner_bb.Min.y, inner_bb.Max.y, yt0.x);
-			char buf[20]; snprintf(buf, 20, "r %.3f", yt0.x);
-			window->DrawList->AddText(ImVec2(inner_bb.Max.x + style.FramePadding.x, y + style.FramePadding.y), ImGui::GetColorU32(ImVec4(1, 0, 0, 1)), buf);
-		}
-
-		if (!vShowChannel || vShowChannel[1])
-		{
-			float y = ImLerp(inner_bb.Min.y, inner_bb.Max.y, yt0.y);
-			char buf[20]; snprintf(buf, 20, "g %.3f", yt0.y);
-			window->DrawList->AddText(ImVec2(inner_bb.Max.x + style.FramePadding.x, y + style.FramePadding.y), ImGui::GetColorU32(ImVec4(0, 1, 0, 1)), buf);
-		}
-
-		if (!vShowChannel || vShowChannel[2])
-		{
-			float y = ImLerp(inner_bb.Min.y, inner_bb.Max.y, yt0.z);
-			char buf[20]; snprintf(buf, 20, "b %.3f", yt0.z);
-			window->DrawList->AddText(ImVec2(inner_bb.Max.x + style.FramePadding.x, y + style.FramePadding.y), ImGui::GetColorU32(ImVec4(0, 0, 1, 1)), buf);
-		}
-
-		if (!vShowChannel || vShowChannel[3])
-		{
-			float y = ImLerp(inner_bb.Min.y, inner_bb.Max.y, yt0.w);
-			char buf[20]; snprintf(buf, 20, "a %.3f", yt0.w);
-			window->DrawList->AddText(ImVec2(inner_bb.Max.x + style.FramePadding.x, y + style.FramePadding.y), ImGui::GetColorU32(ImVec4(1, 1, 1, 1)), buf);
-		}
-	}
-
-	ImGui::PopID();
 }
 
 void ImGui::ImageZoomPoint(ImTextureID vUserTextureId, const float vWidth, const ImVec2& vCenter, const ImVec2& vPoint, const ImVec2& vRadiusInPixels)
@@ -1911,64 +1723,6 @@ void ImGui::PlainImageWithBG(ImTextureID vTexId, const ImVec2& size, const ImVec
 
 	window->DrawList->AddRectFilled(bb.Min, bb.Max, GetColorU32(bg_col), 0.0f);
 	window->DrawList->AddImage(vTexId, bb.Min, bb.Max, ImVec2(0, 0), ImVec2(1, 1), GetColorU32(tint_col));
-}
-
-void ImGui::ImageRatio(ImTextureID vTexId, float vRatioX, float vWidth, ImVec4 vColor, float /*vBorderThick*/)
-{
-	if (vTexId == 0)
-		return;
-
-	ImGuiWindow* window = ImGui::GetCurrentWindow();
-	if (window->SkipItems)
-		return;
-
-	if (!window->ScrollbarY)
-	{
-		vWidth -= ImGui::GetStyle().ScrollbarSize;
-	}
-
-	const ImVec2 uv0 = ImVec2(0, 0);
-	const ImVec2 uv1 = ImVec2(1, 1);
-
-	ImVec2 size = ImVec2(vWidth, vWidth);
-
-	const float ratioX = vRatioX;
-	const float y = size.x * ratioX;
-	if (y > size.y)
-		size.x = size.y / ratioX;
-	else
-		size.y = y;
-
-	size.x = ct::clamp(size.x, 1.0f, vWidth);
-	size.y = ct::clamp(size.y, 1.0f, vWidth);
-
-	ImRect bb(window->DC.CursorPos, window->DC.CursorPos + size);
-	if (vColor.w > 0.0f)
-		bb.Max += ImVec2(2, 2);
-	ImGui::ItemSize(bb);
-	if (!ImGui::ItemAdd(bb, 0))
-		return;
-
-	if (vColor.w > 0.0f)
-	{
-		window->DrawList->AddRect(bb.Min, bb.Max, ImGui::GetColorU32(vColor), 0.0f);
-		window->DrawList->AddImage(vTexId, bb.Min + ImVec2(1, 1), bb.Max - ImVec2(1, 1), uv0, uv1, ImGui::GetColorU32(ImVec4(1, 1, 1, 1)));
-	}
-	else
-	{
-		window->DrawList->AddImage(vTexId, bb.Min, bb.Max, uv0, uv1, ImGui::GetColorU32(ImVec4(1, 1, 1, 1)));
-	}
-
-#ifdef _DEBUG
-	if (ImGui::IsItemHovered())
-	{
-		char arr[3];
-		if (snprintf(arr, 3, "%i", (int)(size_t)vTexId))
-		{
-			ImGui::SetTooltip("%s", arr);
-		}
-	}
-#endif
 }
 
 #ifdef USE_OPENGL

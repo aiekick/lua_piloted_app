@@ -24,6 +24,15 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG")
 include(cmake/3rdparty.cmake)
 add_definitions(${GLFW_DEFINITIONS})
 add_definitions(-DUSE_DECORATIONS_FOR_RESIZE_CHILD_WINDOWS) ## for the resize imgui issue when we have child glfw windows
+add_definitions(-DUSE_GLFW3)
+add_definitions(-DGLFW3)
+add_definitions(-DPROJECT_NAME="${PROJECT}")
+add_definitions(-DPROJECT_PATH="${CMAKE_SOURCE_DIR}")
+add_definitions(-DIMGUI_DISABLE_OBSOLETE_FUNCTIONS)
+add_definitions(-DIMGUI_DEFINE_MATH_OPERATORS)
+add_definitions(-DIMGUI_ENABLE_FREETYPE)
+add_definitions(-DUSE_IMGUI="${CMAKE_SOURCE_DIR}/3rdparty/imgui/imgui.h")
+add_definitions(-DUSE_STD_FILESYSTEM)
 
 if(MSVC)
     # Ignore 4055 for glad
@@ -54,6 +63,18 @@ file(GLOB_RECURSE PROJECT_SRC_FILES
 	${CMAKE_CURRENT_SOURCE_DIR}/src/*.hpp)
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR}/src PREFIX src FILES ${PROJECT_SRC_FILES})
 
+file(GLOB IMGUI_IMPL_SOURCE_FILES 
+		${CMAKE_SOURCE_DIR}/3rdparty/imgui/backends/imgui_impl_glfw.cpp
+		${CMAKE_SOURCE_DIR}/3rdparty/imgui/backends/imgui_impl_glfw.h
+		${CMAKE_SOURCE_DIR}/3rdparty/imgui/backends/imgui_impl_opengl3.cpp
+		${CMAKE_SOURCE_DIR}/3rdparty/imgui/backends/imgui_impl_opengl3.h)
+source_group(src\\ImGui_Impl FILES ${IMGUI_IMPL_SOURCE_FILES})
+
+file(GLOB IMGUI_FREETYPE_SOURCE_FILES
+		${CMAKE_SOURCE_DIR}/3rdparty/imgui/misc/freetype/imgui_freetype.cpp
+		${CMAKE_SOURCE_DIR}/3rdparty/imgui/misc/freetype/imgui_freetype.h)
+source_group(src\\ImGui_FreeType FILES ${IMGUI_FREETYPE_SOURCE_FILES})
+
 add_executable(${PROJECT}
 	${PROJECT_MAIN}
 	${PROJECT_SRC_FILES}
@@ -61,6 +82,10 @@ add_executable(${PROJECT}
 	${IMGUI_IMPL_SOURCE_FILES}
 	${IMGUI_FREETYPE_SOURCE_FILES}
 )
+
+target_compile_definitions(${PROJECT} PUBLIC -DPROJECT_NAME=${PROJECT})
+target_compile_definitions(${PROJECT} PUBLIC -DCUSTOM_IMGUIFILEDIALOG_CONFIG="${CMAKE_SOURCE_DIR}/src/Gui/CustomImGuiFileDialogConfig.h")
+target_compile_definitions(${IMGUIFILEDIALOG_LIBRARIES} PUBLIC -DCUSTOM_IMGUIFILEDIALOG_CONFIG="${CMAKE_SOURCE_DIR}/src/Gui/CustomImGuiFileDialogConfig.h")
 
 include_directories(
 	src

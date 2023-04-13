@@ -14,14 +14,11 @@ const uint32_t DEFAULT_HEIGHT = 700;
 struct GLFWwindow;
 class App
 {
-private:
-	GLFWwindow* main_win_ptr = nullptr;
-
 public:
 	App() = default;
 	~App() = default;
 
-	bool init(const int& vArgc, const char**& vArgv);
+	bool init(const int& vArgc, char** vArgv);
 	void run();
 	bool unit();
 };
