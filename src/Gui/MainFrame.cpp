@@ -29,31 +29,16 @@
 
 #include <imgui/imgui_internal.h>
 
+#include <ctools/cTools.h>
+
 #include <Lua/LuaEngine.h>
 #include <Headers/Globals.h>
 
 #include <Panes/Manager/LayoutManager.h>
 #include <Panes/ToolPane.h>
+#include <Panes/DataPane.h>
 
 #define WIDGET_ID_MAGIC_NUMBER 4577
-
- //////////////////////////////////////////////////////////////////////////////
- //// UTILS ///////////////////////////////////////////////////////////////////
- //////////////////////////////////////////////////////////////////////////////
-
-std::string toStr(const char* fmt, ...)
-{
-	va_list args;
-	va_start(args, fmt);
-	char TempBuffer[3072 + 1];//3072 = 1024 * 3
-	const int w = vsnprintf(TempBuffer, 3072, fmt, args);
-	va_end(args);
-	if (w)
-	{
-		return std::string(TempBuffer, (size_t)w);
-	}
-	return std::string();
-}
 
 //////////////////////////////////////////////////////////////////////////////
 //// CTOR ////////////////////////////////////////////////////////////////////
@@ -81,6 +66,7 @@ bool MainFrame::init()
 	LayoutManager::Instance()->SetPaneDisposalSize(PaneDisposal::BOTTOM, 200.0f);
 
 	LayoutManager::Instance()->AddPane(ToolPane::Instance(), ICON_NDP2_CUBE_SCAN " Tool", "", PaneDisposal::LEFT, true, true);
+	LayoutManager::Instance()->AddPane(DataPane::Instance(), ICON_NDP2_CUBE_SEND " Data", "", PaneDisposal::CENTRAL, true, true);
 	
 	bool res = true;
 
@@ -115,7 +101,7 @@ void MainFrame::display(ImVec2 vPos, ImVec2 vSize)
 			DrawMainMenuBar();
 
 			// ImGui Infos
-			const auto label = toStr("Dear ImGui %s (Docking)", ImGui::GetVersion());
+			const auto label = ct::toStr("Dear ImGui %s (Docking)", ImGui::GetVersion());
 			const auto size = ImGui::CalcTextSize(label.c_str());
 			ImGui::Spacing(ImGui::GetContentRegionAvail().x - size.x - ImGui::GetStyle().FramePadding.x * 2.0f);
 			ImGui::Text("%s", label.c_str());
@@ -128,7 +114,7 @@ void MainFrame::display(ImVec2 vPos, ImVec2 vSize)
 #ifdef _DEBUG
 			// ImGui Infos
 			const auto& io = ImGui::GetIO();
-			const auto fps = toStr("%.1f ms/frame (%.1f fps)", 1000.0f / io.Framerate, io.Framerate);
+			const auto fps = ct::toStr("%.1f ms/frame (%.1f fps)", 1000.0f / io.Framerate, io.Framerate);
 			const auto size = ImGui::CalcTextSize(fps.c_str());
 			ImGui::Spacing(ImGui::GetContentRegionAvail().x - size.x - ImGui::GetStyle().FramePadding.x * 2.0f);
 			ImGui::Text("%s", fps.c_str());

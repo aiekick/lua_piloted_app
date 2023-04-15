@@ -3,6 +3,7 @@ pilot.__index = pilot
 
 function pilot:setup(config)
   self.config = config
+  self:parse_config()
 end
 
 function pilot:set_init_hook(init_hook)
@@ -18,15 +19,21 @@ function pilot:set_step_hook(step_hook)
 end
 
 function pilot:init()
-    self.init_hook()
+    if (self.init_hook) then
+        self.init_hook()
+    end
 end
 
 function pilot:start()
-    self.start_hook()
+    if (self.start_hook) then
+        self.start_hook()
+    end
 end
 
-function pilot:stop()
-    self.step_hook()
+function pilot:step()
+    if (self.step_hook) then
+        self.step_hook()
+    end
 end
 
 function pilot:get_node(node_path)

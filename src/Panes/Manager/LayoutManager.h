@@ -16,6 +16,7 @@ limitations under the License.
 
 #pragma once
 
+#include <ctools/ConfigAbstract.h>
 #include <Panes/Abstract/AbstractPane.h>
 #include <imgui/imgui.h>
 #include <string>
@@ -26,7 +27,7 @@ limitations under the License.
 typedef std::string PaneCategoryName;
 
 class ProjectFile;
-class LayoutManager
+class LayoutManager : public conf::ConfigAbstract
 {
 public:
 	static bool s_PaneFlag_MenuItem(const char* label, const char* shortcut, PaneFlag* vContainer, PaneFlag vFlag, bool vOnlyOneSameTime = false)
@@ -137,6 +138,10 @@ public:
 private: // configuration
 	PaneFlag Internal_GetFocusedPanes();
 	void Internal_SetFocusedPanes(const PaneFlag& vActivePanes);
+
+public: // configuration
+	std::string getXml(const std::string& vOffset, const std::string& vUserDatas);
+	bool setFromXml(tinyxml2::XMLElement* vElem, tinyxml2::XMLElement* vParent, const std::string& vUserDatas);
 
 public: // singleton
 	static LayoutManager *Instance(LayoutManager* vCopy = nullptr, bool vForce = false)

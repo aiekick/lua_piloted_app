@@ -19,8 +19,10 @@ limitations under the License.
 
 #include "LayoutManager.h"
 
+#include <ctools/FileHelper.h>
+#include <ctools/Logger.h>
+
 #include <imgui/imgui_internal.h>
-#include <filesystem>
 
 LayoutManager::LayoutManager() = default;
 LayoutManager::~LayoutManager() = default;
@@ -88,10 +90,10 @@ void LayoutManager::Init(const std::string& vMenuLabel, const std::string& vDefa
 	m_MenuLabel = vMenuLabel;
 	m_DefaultMenuLabel = vDefaultMenuLabel;
 
-	if (!std::filesystem::exists("imgui.ini"))
+	if (!FileHelper::Instance()->IsFileExist("imgui.ini"))
 	{
 		m_FirstLayout = true; // need default layout
-		printf("We will apply default layout\n");
+		LogVarDebug("%s", "We will apply default layout :)");
 	}
 }
 
@@ -193,9 +195,9 @@ void LayoutManager::ApplyInitialDockingLayout(const ImVec2& vSize)
 {
 	ImVec2 _size = vSize;
 
-	if (fabs(_size.x) < FLT_EPSILON || fabs(_size.y) < FLT_EPSILON)
+	if (IS_FLOAT_EQUAL(_size.x, 0.0f) || IS_FLOAT_EQUAL(_size.y, 0.0f))
 	{
-		if (fabs(m_LastSize.x) < FLT_EPSILON || fabs(m_LastSize.y) < FLT_EPSILON)
+		if (IS_FLOAT_EQUAL(m_LastSize.x, 0.0f) || IS_FLOAT_EQUAL(m_LastSize.y, 0.0f))
 		{
 			return;
 		}
@@ -503,4 +505,64 @@ void LayoutManager::Internal_SetFocusedPanes(const PaneFlag& vActivePanes)
 		if (panePtr && vActivePanes & pane.first)
 			FocusSpecificPane(panePtr->m_PaneName);
 	}
+}
+
+///////////////////////////////////////////////////////
+//// CONFIGURATION PUBLIC /////////////////////////////
+///////////////////////////////////////////////////////
+
+std::string LayoutManager::getXml(const std::string& vOffset, const std::string& vUserDatas)
+{
+	std::string str;
+
+	if (vUserDatas == "app")
+	{
+		str += vOffset + "<layout>\n";
+		m_Pane_Focused = Internal_GetFocusedPanes();
+		str += vOffset + "\t<panes opened=\"" + ct::ivariant((int32_t)m_Pane_Shown).GetS() + "\" active=\"" + ct::ivariant((int32_t)m_Pane_Focused).GetS() + "\"/>\n";
+		str += vOffset + "</layout>\n";
+	}
+	else if (vUserDatas == "project")
+	{
+		// per pane settings
+	}
+
+	return str;
+}
+
+bool LayoutManager::setFromXml(tinyxml2::XMLElement* vElem, tinyxml2::XMLElement* vParent, const std::string& vUserDatas)
+{
+	// The value of this child identifies the name of this element
+	std::string strName = "";
+	std::string strValue = "";
+	std::string strParentName = "";
+
+	strName = vElem->Value();
+	if (vElem->GetText())
+		strValue = vElem->GetText();
+	if (vParent != 0)
+		strParentName = vParent->Value();
+
+	if (vUserDatas == "app")
+	{
+		if (strParentName == "layout")
+		{
+			for (const tinyxml2::XMLAttribute* attr = vElem->FirstAttribute(); attr != nullptr; attr = attr->Next())
+			{
+				std::string attName = attr->Name();
+				std::string attValue = attr->Value();
+
+				if (attName == "opened")
+					m_Pane_Shown = (PaneFlag)ct::ivariant(attValue).GetI();
+				if (attName == "active")
+					m_Pane_Focused = (PaneFlag)ct::ivariant(attValue).GetI();
+			}
+		}
+	}
+	else if (vUserDatas == "project")
+	{
+
+	}
+
+	return true;
 }

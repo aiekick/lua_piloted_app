@@ -4,53 +4,41 @@ package.path = "C:\\Gamedev\\lua\\lua_piloted_app\\doc\\?.lua;" .. package.path
 local pilot = require("pilot_module")
 
 pilot:setup({
-	dataSource={
-		class=UDPDataSource,
+	dataProvider={
+		class=UDPDataProvider,
 		port=1254,
 		ip="0.152.12.48",
+        format = {
+            sim_time={
+                name="sim_time",
+                type="double",
+                default_value=0,
+                count=1,
+            },
+            event={
+                name="state",
+                type="int",
+                default_value=0,
+                count=1,
+            },
+            positionTL={
+                name="position",
+                type="double",
+                default_value=0,
+                count=3,
+            },
+            attitude={
+                name="attitude",
+                type="double",
+                default_value=0,
+                count=3,
+            },
+        },
 	},
-	dataObserver={
-		class=DataObserver,
-		channels={
-			sim_time={
-				class=DataChannel,
-				source=dataSource,
-				name="sim_time",
-				type="double",
-				default_value=0,
-				size=8,
-				count=1,
-			},
-			event={
-				class=DataChannel,
-				source=dataSource,
-				name="state",
-				type="int",
-				default_value=0,
-				size=4,
-				count=1,
-			},
-			positionTL={
-				class=DataChannel,
-				source=dataSource,
-				name="position",
-				type="double",
-				default_value=0,
-				size=8,
-				count=3,
-			},
-			attitude={
-				class=DataChannel,
-				source=dataSource,
-				name="attitude",
-				type="double",
-				default_value=0,
-				size=8,
-				count=3,
-			},
-					},
-	},
+    test={
+    },
 	ConvertTLtoGodot={
+        class=ConvertTLtoGodot,
 		time="dataObserver.sim_time",
 		posTL="dataObserver.posattTL[1..3]",
 		eulerTL="dataObserver.posattTL[4..6]",
