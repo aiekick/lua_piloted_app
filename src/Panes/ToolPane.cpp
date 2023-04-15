@@ -25,8 +25,6 @@ limitations under the License.
 #include <ImGuiFileDialog/ImGuiFileDialog.h>
 #include <cinttypes> // printf zu
 
-#include <Lua/LuaEngine.h>
-
 static int SourcePane_WidgetId = 0;
 
 ///////////////////////////////////////////////////////////////////////////////////

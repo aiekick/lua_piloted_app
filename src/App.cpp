@@ -15,7 +15,6 @@
 
 #include <Gui/MainFrame.h>
 #include <Headers/Globals.h>
-#include <Lua/LuaEngine.h>
 
 //////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////
@@ -134,8 +133,6 @@ void App::run()
 		}
 
 		MainFrame::Instance()->display(pos, size);
-
-		LuaEngine::Instance()->FinishIfRequired();
 
 		ImGui::Render();
 

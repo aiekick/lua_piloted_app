@@ -1,5 +1,6 @@
 #include "LuaVM.h"
-#include <sol/sol.hpp>
+#include "LuaVastModule.h"
+#include <ctools/FileHelper.h>
 
 ///////////////////////////////////////////////
 //// INIT / UNIT //////////////////////////////
@@ -7,58 +8,80 @@
 
 bool LuaVM::init()
 {
-    m_LuaStatePtr = CreateLuaState();
-    if (m_LuaStatePtr)
+    try 
     {
-        return true;
+        // load lua standard libs
+        m_Lua.open_libraries(sol::lib::base);
+        m_Lua.open_libraries(sol::lib::package);
+        m_Lua.open_libraries(sol::lib::coroutine);
+        m_Lua.open_libraries(sol::lib::string);
+        m_Lua.open_libraries(sol::lib::os);
+        m_Lua.open_libraries(sol::lib::math);
+        m_Lua.open_libraries(sol::lib::table);
+        m_Lua.open_libraries(sol::lib::debug);
+        m_Lua.open_libraries(sol::lib::bit32);
+        m_Lua.open_libraries(sol::lib::io);
+        m_Lua.open_libraries(sol::lib::ffi);
+        m_Lua.open_libraries(sol::lib::jit);
+
+        // load lus vast module
+        LuaVastModule::create_lua_vast_module(m_Lua);
+
+        auto result_test = m_Lua.safe_script(u8R"(
+local vast = vast_module.new();
+
+vast:setup({
+	dataProvider={
+		class=UDPDataProvider,
+		port=1254,
+		ip="0.152.12.48",
+        format = {
+            event={
+                name="state",
+                type="int",
+                count=1,
+                default_value=0,
+            },
+        },
+	},
+    test={
+        class="ScreenText",
+        [function(obj,data)
+            obj:setText("State = "..tostring(data))
+        end]="dataProvider.event",
+    },
+})
+
+vast:init()
+vast:start()
+
+vast:print_project(10)
+)");
+        if (result_test.valid())
+        {
+            return true;
+        }
     }
+    catch (const sol::error& e) 
+    {
+        std::cout << "lua err : " << e.what() << std::endl;
+
+        return false;
+    }
+
 	return false;
 }
 
 void LuaVM::unit()
 {
-    if (m_LuaStatePtr)
-    {
-        DestroyLuaState(m_LuaStatePtr);
-    }
+    
 }
 
 ///////////////////////////////////////////////
 //// PRIVATE //////////////////////////////////
 ///////////////////////////////////////////////
 
-lua_State* LuaVM::CreateLuaState()
+void LuaVM::create_lua_vast_module()
 {
-    auto lua_state_ptr = luaL_newstate();
-    if (lua_state_ptr)
-    {
-        luaJIT_setmode(lua_state_ptr, 0, LUAJIT_MODE_ENGINE | LUAJIT_MODE_ON);
 
-        luaL_openlibs(lua_state_ptr); // lua access to basic libraries
-
-        // register custom functions
-        /*lua_register(lua_state_ptr, "print", lua_int_print_args);
-        lua_register(lua_state_ptr, "LogInfo", Lua_void_LogInfo_string);
-        lua_register(lua_state_ptr, "LogWarning", Lua_void_LogWarning_string);
-        lua_register(lua_state_ptr, "LogError", Lua_void_LogError_string);
-        lua_register(lua_state_ptr, "SetInfos", Lua_void_SetInfos_string);
-        lua_register(lua_state_ptr, "SetRowBufferName", Lua_void_SetRowBufferName_string);
-        lua_register(lua_state_ptr, "SetFunctionForEachRow", Lua_void_SetFunctionForEachRow_string);
-        lua_register(lua_state_ptr, "SetFunctionForEndFile", Lua_void_SetFunctionForEndFile_string);
-        lua_register(lua_state_ptr, "GetRowIndex", Lua_int_GetRowIndex_void);
-        lua_register(lua_state_ptr, "GetRowCount", Lua_int_GetRowCount_void);
-        lua_register(lua_state_ptr, "AddSignalValue", Lua_void_AddSignalValue_category_name_date_value);
-        lua_register(lua_state_ptr, "AddSignalStartZone", Lua_void_AddSignalStartZone_category_name_date_string);
-        lua_register(lua_state_ptr, "AddSignalEndZone", Lua_void_AddSignalEndZone_category_name_date_string);
-        lua_register(lua_state_ptr, "AddSignalTag", Lua_void_AddSignalTag_date_color_name_help);
-        lua_register(lua_state_ptr, "AddSignalStatus", Lua_void_AddSignalStatus_category_name_date_string);*/
-    }
-
-    return lua_state_ptr;
-}
-
-void LuaVM::DestroyLuaState(lua_State* vlua_state_ptr)
-{
-    lua_close(vlua_state_ptr);
-    vlua_state_ptr = nullptr;
 }

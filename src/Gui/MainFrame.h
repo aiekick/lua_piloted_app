@@ -18,6 +18,8 @@
 #include <glad/glad.h>
 #include <imgui/imgui.h>
 
+#include <Core/LuaVM.h>
+
 #include <functional>
 #include <string>
 #include <vector>
@@ -34,6 +36,8 @@ private:
 
 	bool m_ShowImGui = false;				// show ImGui win
 	bool m_ShowMetric = false;				// show metrics
+
+	LuaVM m_LuaVM;
 
 public:
 	bool init();

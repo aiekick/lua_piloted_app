@@ -31,7 +31,6 @@
 
 #include <ctools/cTools.h>
 
-#include <Lua/LuaEngine.h>
 #include <Headers/Globals.h>
 
 #include <Panes/Manager/LayoutManager.h>
@@ -71,14 +70,17 @@ bool MainFrame::init()
 	bool res = true;
 
 	res &= LayoutManager::Instance()->InitPanes();
-	res &= LuaEngine::Instance()->Init();
+
+
+	res &= m_LuaVM.init();
 	
 	return res;
 }
 
 void MainFrame::unit()
 {
-	LuaEngine::Instance()->Unit();
+	m_LuaVM.unit();
+
 	LayoutManager::Instance()->UnitPanes();
 }
 

@@ -6,7 +6,7 @@
 #include <unordered_map>
 #include <ctools/Logger.h>
 
-class DataSource
+class DataProvider
 {
 private:
 	// key = data name, offset in buffer for have op on datas
@@ -16,35 +16,7 @@ private:
 
 public:
 	// add size to uniform block, return startOffset
-	bool RegisterByteSize(const std::string& vKey, uint32_t vSizeInBytes, uint32_t* vStartOffset = 0)
-	{
-		if (OffsetExist(vKey))
-		{
-			LogVarDebug("key %s is already defined in UniformBlockStd140. RegisterVar fail.", vKey.c_str());
-		}
-		else if (vSizeInBytes > 0)
-		{
-			uint32_t newSize = vSizeInBytes;
-			uint32_t lastOffset = (uint32_t)m_Datas.size();
-			auto baseAlign = GetGoodAlignement(newSize);
-
-			// il faut trouver le prochain offset qui est multiple de baseAlign
-			auto startOffset = baseAlign * (uint32_t)std::ceil((double)lastOffset / (double)baseAlign);
-			auto newSizeToAllocate = startOffset - lastOffset + newSize;
-			m_Datas.resize(lastOffset + newSizeToAllocate);
-			
-			// on set de "lastOffset" à "lastOffset + newSizeToAllocate"
-			memset(m_Datas.data() + lastOffset, 0, newSizeToAllocate);
-			AddOffsetForKey(vKey, startOffset);
-
-			if (vStartOffset)
-				*vStartOffset = startOffset;
-
-			return true;
-		}
-
-		return false;
-	}
+	bool RegisterByteSize(const std::string& vKey, uint32_t vSizeInBytes, uint32_t* vStartOffset = 0);
 
 	// add a variable
 	template<typename T> void RegisterVar(const std::string& vKey, T vValue); // add var to uniform block
@@ -67,7 +39,7 @@ private:
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 template<typename T>
-void DataSource::RegisterVar(const std::string& vKey, T* vValue, uint32_t vSizeInBytes)
+void DataProvider::RegisterVar(const std::string& vKey, T* vValue, uint32_t vSizeInBytes)
 {
 	uint32_t startOffset;
 	if (RegisterByteSize(vKey, vSizeInBytes, &startOffset))
@@ -78,13 +50,13 @@ void DataSource::RegisterVar(const std::string& vKey, T* vValue, uint32_t vSizeI
 }
 
 template<typename T>
-void DataSource::RegisterVar(const std::string& vKey, T vValue)
+void DataProvider::RegisterVar(const std::string& vKey, T vValue)
 {
 	RegisterVar(vKey, &vValue, sizeof(vValue));
 }
 
 template<typename T>
-bool DataSource::GetVar(const std::string& vKey, T& vValue)
+bool DataProvider::GetVar(const std::string& vKey, T& vValue)
 {
 	if (OffsetExist(vKey))
 	{
@@ -93,12 +65,12 @@ bool DataSource::GetVar(const std::string& vKey, T& vValue)
 		memcpy(&vValue, datas.data() + offset, size);
 		return true;
 	}
-	LogVarDebug("key %s not exist in DataSource. GetVar fail.", vKey.c_str());
+	LogVarDebug("key %s not exist in DataProvider. GetVar fail.", vKey.c_str());
 	return false;
 }
 
 template<typename T>
-bool DataSource::SetVar(const std::string& vKey, T* vValue, uint32_t vSizeInBytes)
+bool DataProvider::SetVar(const std::string& vKey, T* vValue, uint32_t vSizeInBytes)
 {
 	if (OffsetExist(vKey) && vSizeInBytes > 0)
 	{
@@ -108,18 +80,18 @@ bool DataSource::SetVar(const std::string& vKey, T* vValue, uint32_t vSizeInByte
 		isDirty = true;
 		return true;
 	}
-	LogVarDebug("key %s not exist in DataSource. SetVar fail.", vKey.c_str());
+	LogVarDebug("key %s not exist in DataProvider. SetVar fail.", vKey.c_str());
 	return false;
 }
 
 template<typename T>
-bool DataSource::SetVar(const std::string& vKey, T vValue)
+bool DataProvider::SetVar(const std::string& vKey, T vValue)
 {
 	return SetVar(vKey, &vValue, sizeof(vValue));
 }
 
 template<typename T>
-bool DataSource::SetAddVar(const std::string& vKey, T vValue)
+bool DataProvider::SetAddVar(const std::string& vKey, T vValue)
 {
 	T v;
 	if (GetVar(vKey, v))
@@ -127,6 +99,6 @@ bool DataSource::SetAddVar(const std::string& vKey, T vValue)
 		v += vValue;
 		return SetVar(vKey, v);
 	}
-	LogVarDebug("key %s not exist in DataSource. SetAddVar fail.", vKey.c_str());
+	LogVarDebug("key %s not exist in DataProvider. SetAddVar fail.", vKey.c_str());
 	return false;
 }

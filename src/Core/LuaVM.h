@@ -1,17 +1,16 @@
 #pragma once
 
-#include <luajit/src/lua.hpp>
+#include <sol/sol.hpp>
 
 class LuaVM
 {
 private:
-	lua_State* m_LuaStatePtr = nullptr;
+	sol::state m_Lua;
 
 public:
 	bool init();
 	void unit();
 
 private:
-    lua_State* CreateLuaState();
-    void DestroyLuaState(lua_State* vlua_State_ptr);
+	void create_lua_vast_module();
 };

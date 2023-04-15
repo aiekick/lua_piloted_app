@@ -1,9 +1,6 @@
-package.path = "C:\\Gamedev\\lua\\lua_piloted_app\\doc\\?.lua;" .. package.path
---print(package.path)
+local vast = vast_module.new();
 
-local pilot = require("pilot_module")
-
-pilot:setup({
+vast:setup({
 	dataProvider={
 		class=FileDataProvider,
 		port=1254,
@@ -25,7 +22,7 @@ pilot:setup({
     },
 })
 
-pilot:init()
-pilot:start()
+vast:init()
+vast:start()
 
-pilot:print_config(10)
+vast:print_config(10)

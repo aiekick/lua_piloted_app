@@ -1,6 +1,6 @@
-#include "DataSource.h"
+#include "DataProvider.h"
 
-bool DataSource::RegisterByteSize(const std::string& vKey, uint32_t vSizeInBytes, uint32_t* vStartOffset = 0)
+bool DataProvider::RegisterByteSize(const std::string& vKey, uint32_t vSizeInBytes, uint32_t* vStartOffset)
 {
 	if (OffsetExist(vKey))
 	{
@@ -28,12 +28,12 @@ bool DataSource::RegisterByteSize(const std::string& vKey, uint32_t vSizeInBytes
 	return false;
 }
 
-bool DataSource::OffsetExist(const std::string& vKey)
+bool DataProvider::OffsetExist(const std::string& vKey)
 {
 	return m_Offsets.find(vKey) != m_Offsets.end();
 }
 
-uint32_t DataSource::GetGoodAlignement(uint32_t vSize)
+uint32_t DataProvider::GetGoodAlignement(uint32_t vSize)
 {
 	// Std140 Alignement
 	uint32_t goodAlign = (uint32_t)std::pow(2, std::ceil(log(vSize) / log(2)));
@@ -41,7 +41,7 @@ uint32_t DataSource::GetGoodAlignement(uint32_t vSize)
 }
 
 // non templates (define in class implementation)
-void DataSource::AddOffsetForKey(const std::string& vKey, uint32_t vOffset)
+void DataProvider::AddOffsetForKey(const std::string& vKey, uint32_t vOffset)
 {
 	m_Offsets[vKey] = vOffset;
 }
