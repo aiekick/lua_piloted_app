@@ -1,0 +1,323 @@
+{?set %encoding=utf-8
+      %line=wrap}
+{document 
+ {title Document example}
+ {reference XXX-000-YYY}
+ {abstract heml document example file, just a show case of document editing and processing capabilites.}
+ {keywords documentation, word processing, pdf} 
+ {author %sigle=ACME %%Sebastien DEVAUX}
+ {history
+   {edition %version=2 %date=2018-04-30
+Added test procedure section (§{xref SecTest}):
+  - detailed change information
+  - to check history rendering
+   }
+   {edition %version=1 %date=2017-05-12 %%First issue}
+   {edition %version=0.2 %date=2017-05-12 %%2nd draft}
+   {edition %version=0.1 %date=2017-05-12 %%First draft}
+ }
+{section %title=section title
+  {section %title=subsection 1.1 title and attribute with \% percent char
+Paragraphe Paragraphe dfqskdjfh lqsdkflqskdfhlqskdflkqsdjfl qksdf lkqs dflk
+qsldkf lqsdkfl qskdf lqskdflkqsdj flk qsdlfk qlskdf lqskd flkqsd fl qsdlfk
+qlsdkf lqskdflqskd flkqsdj flkq sdlkf qlskdflk qsd flkqsd $plop.
+
+Paragraphe Paragraphe dfqskdjfh lqsdkflqskdfhlqskdflkqsdjfl qksdf lkqs dflk
+qsldkf lqsdkfl qskdf lqskdflkqsdj flk qsdlfk qlskdf lqskd flkqsd fl qsdlfk
+qlsdkf lqskdflqskd flkqsdj flkq sdlkf qlskdflk qsd flkqsd.
+{comment %author=me %id=ME-1 %state=closed
+WTF! this text above means nothing!
+  {reply %author=you
+     Don't care. No meaning needed. Just text layout example.
+     {reply %author=me
+       Make sens. OK.
+     }
+  }
+}
+  }
+  {section %title=subsection 1.2 title
+Paragraphe Paragraphe dfqskdjfh lqsdkflqskdfhlqskdflkqsdjfl qksdf lkqs dflk
+qsldkf lqsdkfl qskdf lqskdflkqsdj flk qsdlfk qlskdf lqskd flkqsd fl qsdlfk
+qlsdkf lqskdflqskd flkqsdj flkq sdlkf qlskdflk qsd flkqsd.
+  - enum 1
+  - enum 2
+    - enum 2.1
+      {comment %author=me %id=ME-3 %state=open
+      Comment inside an enum
+      }
+    - enum 2.2
+  - enum 3
+  }
+}
+{comment %author=me %id=ME-2 %state=closed
+Add here an include example
+}
+{?include %src=src/incsection.heml.inc}
+{section %title=Miscellaneous examples 
+  {references %title=References %id=X
+{ref %id=AA %authors=Max Power %edition=1 %date=1972 %ref=ISBN-11221-42 %%1st reference title}
+{ref %id=BB %authors=Durant & al %edition=2 %date=1995 %ref=ISBN-112112-3 %%2nd reference title}
+{ref %id=CC %authors=Flint %edition=2 %date=2012 %ref=ISBN-112112-27 %%3rd reference title}
+{ref %id=CC %authors=Smith %edition=2 %date=2017 %ref=ISBN-112112-23 %%4th reference title}
+  }
+  {references %title=Links %id=L
+{ref %id=CC %authors=Various %href=http://www.wikipedia.org/ %%Wikipedia}
+{ref %id=DD %authors=S.Devaux %href=http://www.eduvax.net/jdev/net.eduvax.heml %%HEML}
+  }
+  {definitions %title=Glossary
+{def %entry=HTTP %%Hyper Text Transport Procotol}
+{def %entry=bird %%Lifeform that can fly and make eggs}
+{def %entry=one %%1st number}
+{def %entry=two %%2nd number}
+  }
+  {section %title=Requirements
+{req %id=req.1 
+{up uprec.A}
+{up uprec.C}
+A requirement shall be a short sentence defining a single characteristic of the specified {kw object}.
+}
+This is not a requirement, but just companion text to provide a better understanding of the requirements.
+{req %id=req.2
+{up uprec.C}
+{up uprec.B}
+A sentance without the verb shall is not a requirement.
+}
+{req %id=req.3 %%Each requirement shall have a unique identifier}
+{req %id=req.4
+A bad requirement that is not just a sentence but contains many things with
+structured bullets:
+ - shall apply item 1
+ - shall apply item 2
+
+With additional long text to check how lines break and margins are well handled:
+df kqsjdhf kqjsdhfkjqsdh fkjqshdf kjqsdhf kjqsdhfk jqsdfkjqshd fkjqshdkfj ksdjfh
+kqjsdhf kqjsdf kqsjdf.
+}
+{req %id=requirement_with_a_very_long_identifier_to_check_it_is_not_trunkated
+Some people love huge levels of dotted requirements identifiers.
+}
+  }
+  {section %title=Highlights
+Paragraph may have {em some emphasis} content or enclosed {kw keyword} in the
+text. As well this is a citation: {q Science is what we understand well enough
+to explain to a computer. Art is everything else we do.} blabla {todo to
+complete the doc add the missing parts. additional sentance to make the todo
+section long enough to not fit in the current line and check it is properly
+wrapped on next.} blabla. Covers: {req req.2}.
+
+Let's go to {a %href=http://kernel.org %%the linux kernel archives}.
+{note %title=information box
+Some complementary informations, advices, best practices... See doc {xref CC} and {xref BB} for more details.
+}
+{note %type=warning %title=warning box
+Some complementary detail to take care, special cautions...
+}
+Sometime there are things we are unsure but a guess is done: {tbc next human
+flight to the moon will lift off in 2025}, while others are not yet 
+known: {tbd next human on the moon name. And here again a long enough sentence
+is needed to check line wrap}.
+  - {tbc tbc sentence as a bullet}
+
+{tbc tbc as a standalone paragraph.}
+
+%{tbc tbc starting a new pargraph.} And the paragraph complement.
+  }
+  {section %title=Tables
+{table %title=Example of table %xref=TableEX
+{tr
+{th col1}{th col2}{th col3}
+}
+{?table %fields=th,td,td
+1 % 2 % 3
+7 % 8 % 9
+A % Very long text in one colomn to check it will resize everything automatically and brake lines that are very long and render correctly cells containing not only a few words but complete paragraphs. % B
+7 %  see section  8 % 9
+1 % 2 % 3
+4 % 5 % 6
+7 % 8 % 9
+1 % 2 % 3
+4 % 5 % 6
+7 % 8 % 9
+7 % 8 % 9
+1 % 2 % 3
+4 % 5 % 6
+7 % 8 % 9
+1 % 2 % 3
+4 % 5 % 6
+7 % 8 % 9
+7 % 8 % 9
+1 % 2 % 3
+4 % 5 % 6
+7 % 8 % 9
+1 % 2 % 3
+4 % 5 % 6
+7 % 8 % 9
+7 % 8 % 9
+1 % 2 % 3
+4 % 5 % 6
+7 % 8 % 9
+1 % 2 % 3
+4 % 5 % 6
+7 % 8 % 9
+7 % 8 % 9
+1 % 2 % 3
+4 % 5 % 6
+7 % 8 % 9
+1 % 2 % 3
+4 % 5 % 6
+7 % 8 % 9
+7 % 8 % 9
+1 % 2 % 3
+4 % 5 % 6
+7 % 8 % 9
+1 % 2 % 3
+4 % 5 % 6
+7 % 8 % 9
+}
+{tr
+ {td
+plop:
+  - bullet 1
+  - bullet 2
+ }
+ {td 
+{code %language=ada
+{!package Hello is
+begin
+    procedure World is
+       Text.IO.WriteLine("Hello World");
+    end World;
+end Hello;!}}
+ }
+ {td world}
+}
+}
+  }
+  {section %title=figure / uml
+You should see below a simple UML class diagram showing two classes and an
+inheritance link {req req.2}:
+{fig %title=uml %src=uml.png %xref=FigUML}
+{# @startuml uml.png
+Parent <|-- Child
+@enduml
+#}
+{fig %title=uml from subdir %src=subdir/subdiruml.png}
+You should see below the rendering of src/diaSample.dia:
+{fig %title=dia diagram %src=diaSample.png %xref=FigDia}
+{comment %author=me %id=ME-21 %state=open
+to check comment index sorting.
+}
+You should see below a directed graph:
+{fig %title=digraph %src=digraph.png}
+{#
+@startdot digraph.png 
+digraph G {
+	node [ shape=box, style="rounded,dashed,filled" ];
+	edge [ color=blue ];
+	"Node 1" [fillcolor=red];
+	"Node 2" [fillcolor=blue];
+	"Node 3" [fillcolor=green];
+	"Node 1" -> "Node 2";
+	"Node 2" -> "Node 3";
+	"Node 3" -> "Node 1";
+} 
+@enddot
+#}
+
+Equations defined using tex syntax:
+ - inline equation {equation %%E = mc^2}
+ - or "figure" equation.
+{equation
+{!T_{H} = \frac{{\hbar}c^3}{8{\pi}k_{B}GM}!}
+}
+  }
+  {section %title=code %xref=SCode
+{code %language=c++ %title=C++ code sample %%{!/**
+ * Dummy function
+ */
+void Example::helloWorld() {
+    char str[1024];
+    printf("Hello world !\n");
+    printf("len=%d\n",sampleprj_cpplib_res_text_dat_len);
+    printf("bufptr=%x\n",sampleprj_cpplib_res_text_dat);
+    strncpy(str,(const char *)sampleprj_cpplib_res_text_dat,
+			sampleprj_cpplib_res_text_dat_len);
+    str[sampleprj_cpplib_res_text_dat_len]='\0';
+    printf("[%s]\n",sampleprj_cpplib_res_text_dat);
+}!}}
+{code %language=lua %title=lua code sample %%{!--
+-- Dummy function
+--
+function helloWorld()
+    print("Hello world !")
+end!}}
+  }
+  {section %title=Cross reference
+UML diagram exemple is Fig {xref FigUML}.
+
+Long table exemple is Table {xref TableEX}.
+
+Code example is in §{xref SCode}.
+  }
+}
+{section %title=Test and procedures %xref=SecTest
+  {check %id=Test1 %type=manual test %title=Test example 1
+    {req req.1}
+    {req req.2}
+{section %title=part 1
+    {operation
+1st action to be performed
+    }
+    {assert
+      {req req.2}
+No error on 1st action.
+    }
+}
+{section %title=part 2
+    {operation
+2nd action
+    }
+    {assert
+Action 2 result is 42.
+    }
+{tbd the question that match 42 answer.}
+}
+  }
+  {procedure %id=Proc1 %title=Operational procedure
+    {operation
+Power system on.
+    }
+    {assert
+System in operating state.
+    }
+  }
+  {section %title=Automated test index
+{?include %src=testdefindex.heml}
+  }
+}
+{appendices
+{section %title=Requirement references
+  {index %type=req}
+  {index %type=upreq}
+}
+{section %title=Open points
+  {index %type=tbd}
+  {index %type=tbc}
+}
+{?script
+hideComment=parameters:get("showComments")~="true"
+if hideComment then
+    parser:activate(false)
+end
+?}
+{section %title=Discussion
+  {index %type=comment}
+}
+{?script
+if hideComment then
+    parser:activate(true)
+end
+?}
+
+}
+}

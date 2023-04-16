@@ -70,7 +70,7 @@ void LuaVastModule::print_project(const uint32_t& v_depth)
 {
     try
     {
-        recurs_print_project(m_project_table, v_depth);
+        recurs_print_table(m_project_table, v_depth);
     }
     catch (const sol::error& e)
     {
@@ -82,7 +82,7 @@ void LuaVastModule::print_project(const uint32_t& v_depth)
 //// PRIVATE ////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
 
-void LuaVastModule::recurs_print_project(sol::table& v_table, const uint32_t& v_depth, const uint32_t& v_space_count)
+void LuaVastModule::recurs_print_table(sol::table& v_table, const uint32_t& v_depth, const uint32_t& v_space_count)
 {
     auto current_space_string = std::string(v_space_count, ' ');
 
@@ -125,7 +125,7 @@ void LuaVastModule::recurs_print_project(sol::table& v_table, const uint32_t& v_
                 {
                     std::cout << current_space_string << "[\"" << key_as_string << "\"] = {" << std::endl;
 
-                    recurs_print_project(value_as_table, v_depth - 1U, v_space_count + 4U);
+                    recurs_print_table(value_as_table, v_depth - 1U, v_space_count + 4U);
 
                     std::cout << current_space_string << "}," << std::endl;
                 }
@@ -173,5 +173,61 @@ void LuaVastModule::recurs_print_project(sol::table& v_table, const uint32_t& v_
     if (v_space_count == 0)
     {
         std::cout << " " << std::endl;
+    }
+}
+
+void LuaVastModule::recurs_load_project(sol::table& v_table, const uint32_t& v_depth)
+{
+    if (v_depth == 0)
+    {
+        return;
+    }
+
+    // on va iterer le 1er niveai
+    // comme les tables sont des hash map
+    // l'ordre affiché n'est pas l'ordre parsé
+    // on ne tombera pas directement sur la key class
+    // du coup on va :
+    // soaver la sol::table
+    // iterer jusqu'a tomber sur la cle class
+    // creer le node du bon type avec le factory et lui passer en param la sol::table
+    for (auto& item : v_table)
+    {
+        auto& key = item.first;
+        auto& value = item.second;
+
+        const auto& key_type = key.get_type();
+        const auto& value_type = value.get_type();
+
+        if (key_type == sol::type::string &&
+            value_type == sol::type::table)
+        {
+            sol::table value_as_table = value.as<sol::table>();
+            if (!value_as_table.empty())
+            {
+                for (auto& members : value_as_table)
+                {
+                    auto& member_key = item.first;
+                    auto& member_value = item.second;
+
+                    const auto& member_key_type = key.get_type();
+                    const auto& member_value_type = value.get_type();
+
+                    if (member_key_type == sol::type::string)
+                    {
+                        auto key_as_string = member_key.as<std::string>();
+                        if (key_as_string == "class")
+                        {
+                            if (member_value_type == sol::type::string)
+                            {
+                                auto value_as_string = value.as<std::string>();
+
+                                //NodeFactory::create_node(value_as_string, value_as_table);
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }

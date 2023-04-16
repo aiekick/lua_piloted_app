@@ -36,5 +36,12 @@ private:
     /// <param name="vTable">the table to print</param>
     /// <param name="vDepth">the max depth for avoid infinite recursion</param>
     /// <param name="vSpaceCount">the sapce count for print indents</param>
-    void recurs_print_project(sol::table& v_table, const uint32_t& v_depth = 10U, const uint32_t& v_space_count = 0U);
+    void recurs_print_table(sol::table& v_table, const uint32_t& v_depth = 10U, const uint32_t& v_space_count = 0U);
+
+    /// <summary>
+    /// will load the project
+    /// </summary>
+    /// <param name="vTable">the table to print</param>
+    /// <param name="vDepth">the max depth for avoid infinite recursion</param>
+    void recurs_load_project(sol::table& v_table, const uint32_t& v_depth = 10U);
 };

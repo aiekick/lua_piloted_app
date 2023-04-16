@@ -32,7 +32,7 @@ local vast = vast_module.new();
 
 vast:setup({
 	dataProvider={
-		class=UDPDataProvider,
+		class="FileDataProvider",
 		port=1254,
 		ip="0.152.12.48",
         format = {
@@ -44,11 +44,15 @@ vast:setup({
             },
         },
 	},
-    test={
+    converterTest={
+        class="ConverterTest",
+        eventTest="dataProvider.event"
+    },
+    screenText={
         class="ScreenText",
         [function(obj,data)
             obj:setText("State = "..tostring(data))
-        end]="dataProvider.event",
+        end]="converterTest.eventTest",
     },
 })
 
