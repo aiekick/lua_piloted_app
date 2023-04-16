@@ -4,9 +4,10 @@
 #include <thread>
 
 #include <abstract/NumericDataProvider.h>
-#include <interfaces/iVisitor.h>
 
-class FileDataProvider : public NumericDataProvider<double>, public iVisitor
+#include <abstract/LuaNode.h>
+
+class FileDataProvider : public NumericDataProvider<double>, public LuaNode
 {
 private:
 	std::string m_FilePathName;
@@ -19,7 +20,7 @@ public:
 	void init();
 	void unit();
 
-	void visit() override;
+	bool buildNode(const sol::table& vTable) override;
 
 	void setFilepathName(const std::string& vFilePathName);
 	void start_read_op(const double& vPeriod);

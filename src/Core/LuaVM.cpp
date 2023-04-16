@@ -2,12 +2,17 @@
 #include "LuaVastModule.h"
 #include <ctools/FileHelper.h>
 
+#include <nodes/DataProviders/FileDataProvider.h>
+#include <nodes/DataConverters/DataConvertTest.h>
+
 ///////////////////////////////////////////////
 //// INIT / UNIT //////////////////////////////
 ///////////////////////////////////////////////
 
 bool LuaVM::init()
 {
+    bool res = true;
+
     try 
     {
         // load lua standard libs
@@ -24,34 +29,67 @@ bool LuaVM::init()
         m_Lua.open_libraries(sol::lib::ffi);
         m_Lua.open_libraries(sol::lib::jit);
 
+        // register nodes 
+        m_NodeFactoryPtr = NodeFactory::create();
+        if (m_NodeFactoryPtr)
+        {
+            m_NodeFactoryPtr->register_node<FileDataProvider>("FileDataProvider");
+            m_NodeFactoryPtr->register_node<DataConvertTest>("DataConvertTest");
+        }
+        else
+        {
+            return false;
+        }
+
+        // graph container
+        m_GraphPtr = Graph::create();
+        if (!m_GraphPtr)
+        {
+            return false;
+        }
+
         // load lua vast module
-        LuaVastModule::create_lua_vast_module(m_Lua);
+        LuaVastModule::create_lua_vast_module(m_Lua, this);
 
         // test with custom projet structure
         auto result_test = m_Lua.safe_script(u8R"(
 vast:setup({
 	dataProvider={
 		class="FileDataProvider",
-		port=1254,
-		ip="0.152.12.48",
+        file="doc/log_sample.log",
         format = {
-            event={
-                name="state",
-                type="int",
+            sim_time={
+                name="sim_time",
+                type="double",
+                count=1,
+                default_value=0,
+            },
+            epoch_time={
+                name="epoch_time",
+                type="double",
+                count=1,
+                default_value=0,
+            },
+            render_time={
+                name="render_time",
+                type="double",
                 count=1,
                 default_value=0,
             },
         },
 	},
     converterTest={
-        class="ConverterTest",
-        eventTest="dataProvider.event"
+        class="DataConvertTest",
+        render_time_test="dataProvider.render_time"
     },
     screenText={
         class="ScreenText",
         [function(obj,data)
-            obj:setText("State = "..tostring(data))
-        end]="converterTest.eventTest",
+            print("Render_time : "..tostring(data).." ms")
+        end]="dataProvider.render_time",
+        [function(obj,data)
+            print("Render_time : "..tostring(data).." f/s")
+        end]="converterTest.render_time_test",
     },
 })
 
@@ -77,7 +115,17 @@ vast:print_project(10)
 
 void LuaVM::unit()
 {
-    
+    if (m_NodeFactoryPtr)
+    {
+        m_NodeFactoryPtr->clear();
+        m_NodeFactoryPtr.reset();
+    }
+
+    if (m_GraphPtr)
+    {
+        m_GraphPtr->clear();
+        m_GraphPtr.reset();
+    }
 }
 
 ///////////////////////////////////////////////

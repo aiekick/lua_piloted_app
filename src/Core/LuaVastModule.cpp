@@ -1,10 +1,11 @@
 #include "LuaVastModule.h"
 
+#include <memory>
+#include <Core/LuaVM.h>
 #include <sol/types.hpp>
 #include <ctools/cTools.h>
-#include <memory>
 
-void LuaVastModule::create_lua_vast_module(sol::state& v_state)
+void LuaVastModule::create_lua_vast_module(sol::state& v_state, LuaVM* vLuaVMPtr)
 {
     // it seems, there is no method to ensure vState is valid..
     
@@ -22,13 +23,26 @@ void LuaVastModule::create_lua_vast_module(sol::state& v_state)
         "print_project", &LuaVastModule::print_project);
 
     // instanciation du module vast a l'obejct lua vast
-    std::shared_ptr<LuaVastModule> vast_ptr = std::make_shared<LuaVastModule>();
-    v_state["vast"] = std::move(vast_ptr);
+    auto vast_ptr = std::make_shared<LuaVastModule>();
+    if (vast_ptr)
+    {
+        vast_ptr->m_LuaVMPtr = vLuaVMPtr;
+        v_state["vast"] = std::move(vast_ptr);
+    }
 }
 
 void LuaVastModule::setup(sol::table v_project)
 {
     m_project_table = v_project;
+
+    try
+    {
+        load_project(m_project_table);
+    }
+    catch (const sol::error& e)
+    {
+        std::cout << "setup err : " << e.what() << std::endl;
+    }
 }
 
 void LuaVastModule::set_init_hook(sol::function v_init_hook_function)
@@ -181,21 +195,18 @@ void LuaVastModule::recurs_print_table(sol::table& v_table, const uint32_t& v_de
     }
 }
 
-void LuaVastModule::recurs_load_project(sol::table& v_table, const uint32_t& v_depth)
+void LuaVastModule::load_project(sol::table& v_table)
 {
-    if (v_depth == 0)
-    {
-        return;
-    }
-
-    // on va iterer le 1er niveai
+    // on va iterer le 1er niveau
     // comme les tables sont des hash map
-    // l'ordre affiché n'est pas l'ordre parsé
-    // on ne tombera pas directement sur la key class
+    // l'ordre parsé ne sera pas l'ordre affiché dans le code lua
+    // on ne tombera pas directement sur la key class en 1er
     // du coup on va :
-    // soaver la sol::table
-    // iterer jusqu'a tomber sur la cle class
-    // creer le node du bon type avec le factory et lui passer en param la sol::table
+    // - sauver la sol::table
+    // - iterer jusqu'a tomber sur la cle class
+    // - creer le node du bon type avec le factory et lui passer en param la sol::table
+    // - le node va alors ce build en fonction du contenu de la sol::table
+
     for (auto& item : v_table)
     {
         auto& key = item.first;
@@ -207,27 +218,36 @@ void LuaVastModule::recurs_load_project(sol::table& v_table, const uint32_t& v_d
         if (key_type == sol::type::string &&
             value_type == sol::type::table)
         {
+            auto key_as_string = key.as<std::string>();
             sol::table value_as_table = value.as<sol::table>();
             if (!value_as_table.empty())
             {
                 for (auto& members : value_as_table)
                 {
-                    auto& member_key = item.first;
-                    auto& member_value = item.second;
+                    auto& member_key = members.first;
+                    auto& member_value = members.second;
 
-                    const auto& member_key_type = key.get_type();
-                    const auto& member_value_type = value.get_type();
+                    const auto& member_key_type = member_key.get_type();
+                    const auto& member_value_type = member_value.get_type();
 
                     if (member_key_type == sol::type::string)
                     {
-                        auto key_as_string = member_key.as<std::string>();
-                        if (key_as_string == "class")
+                        auto member_key_as_string = member_key.as<std::string>();
+                        if (member_key_as_string == "class")
                         {
                             if (member_value_type == sol::type::string)
                             {
-                                auto value_as_string = value.as<std::string>();
+                                auto member_value_as_string = member_value.as<std::string>();
 
-                                //NodeFactory::create_node(value_as_string, value_as_table);
+                                if (m_LuaVMPtr)
+                                {
+                                    auto factory_ptr = m_LuaVMPtr->getNodeFactory().lock();
+                                    auto graph_ptr = m_LuaVMPtr->getGraph().lock();
+                                    if (factory_ptr && graph_ptr)
+                                    {
+                                        graph_ptr->addNode(factory_ptr->create(member_value_as_string, value_as_table));
+                                    }
+                                }
                             }
                         }
                     }
@@ -235,4 +255,9 @@ void LuaVastModule::recurs_load_project(sol::table& v_table, const uint32_t& v_d
             }
         }
     }
+
+    // maintenant que tout les nodes sont créé
+    // il faut les connecter entre eux par dependences
+
+
 }

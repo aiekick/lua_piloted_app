@@ -1,15 +1,18 @@
 #pragma once
 
+#include <memory>
 #include <cstdint>
 #include <sol/sol.hpp>
 
+class LuaVM;
 class LuaVastModule
 {
 private:
     sol::table m_project_table;
+    LuaVM* m_LuaVMPtr = nullptr;
 
 public:
-    static void create_lua_vast_module(sol::state& v_state);
+    static void create_lua_vast_module(sol::state& v_state, LuaVM* vLuaVMPtr);
 
 public:
     void setup(sol::table v_project);
@@ -41,6 +44,5 @@ private:
     /// will load the project
     /// </summary>
     /// <param name="vTable">the table to print</param>
-    /// <param name="vDepth">the max depth for avoid infinite recursion</param>
-    void recurs_load_project(sol::table& v_table, const uint32_t& v_depth = 10U);
+    void load_project(sol::table& v_table);
 };

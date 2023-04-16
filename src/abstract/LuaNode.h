@@ -1,6 +1,6 @@
 #pragma once
 
-#include <col/sol.hpp>
+#include <sol/sol.hpp>
 
 class LuaNode
 {
@@ -9,5 +9,5 @@ private:
 	
 public:
 	virtual ~LuaNode() = default;
-	virtual buildNode(const sol::table vTable) = 0;
+	virtual bool buildNode(const sol::table& vTable) = 0;
 };
