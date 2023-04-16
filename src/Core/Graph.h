@@ -2,7 +2,7 @@
 
 #include <string>
 
-class ProjectBuilder
+class Graph
 {
 public:
 	void LoadProjectFromFile(const std::string& vProjectFilePathName);

@@ -24,12 +24,11 @@ bool LuaVM::init()
         m_Lua.open_libraries(sol::lib::ffi);
         m_Lua.open_libraries(sol::lib::jit);
 
-        // load lus vast module
+        // load lua vast module
         LuaVastModule::create_lua_vast_module(m_Lua);
 
+        // test with custom projet structure
         auto result_test = m_Lua.safe_script(u8R"(
-local vast = vast_module.new();
-
 vast:setup({
 	dataProvider={
 		class="FileDataProvider",
@@ -84,8 +83,3 @@ void LuaVM::unit()
 ///////////////////////////////////////////////
 //// PRIVATE //////////////////////////////////
 ///////////////////////////////////////////////
-
-void LuaVM::create_lua_vast_module()
-{
-
-}

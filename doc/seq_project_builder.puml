@@ -1,0 +1,19 @@
+@startuml
+
+== Project Parsing ==
+
+"Project table" <- "Project Parser" : get project file
+activate "Project Parser"
+
+"Project Parser" -> "Project Parser" : start Iterate over project file
+"Project Parser" -> "Project Parser" : enter in a fist level block
+"Project Parser" -> "Project Parser" : save lua table object
+"Project Parser" -> "Project Parser" : save lua table object
+
+deactivate "Project Parser"
+
+== Project Building ==
+
+
+
+@enduml

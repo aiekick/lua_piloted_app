@@ -2,12 +2,13 @@
 
 #include <sol/types.hpp>
 #include <ctools/cTools.h>
+#include <memory>
 
 void LuaVastModule::create_lua_vast_module(sol::state& v_state)
 {
     // it seems, there is no method to ensure vState is valid..
     
-    // chargement du module lua vast
+    // declaration du module lua vast
     v_state.new_usertype<LuaVastModule>("vast_module",
         "setup", &LuaVastModule::setup,
         "set_init_hook", &LuaVastModule::set_init_hook,
@@ -19,6 +20,10 @@ void LuaVastModule::create_lua_vast_module(sol::state& v_state)
         "set_stop_hook", &LuaVastModule::set_stop_hook,
         "stop", &LuaVastModule::stop,
         "print_project", &LuaVastModule::print_project);
+
+    // instanciation du module vast a l'obejct lua vast
+    std::shared_ptr<LuaVastModule> vast_ptr = std::make_shared<LuaVastModule>();
+    v_state["vast"] = std::move(vast_ptr);
 }
 
 void LuaVastModule::setup(sol::table v_project)

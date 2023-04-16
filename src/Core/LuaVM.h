@@ -10,7 +10,4 @@ private:
 public:
 	bool init();
 	void unit();
-
-private:
-	void create_lua_vast_module();
 };

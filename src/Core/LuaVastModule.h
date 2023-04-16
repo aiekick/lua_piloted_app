@@ -29,7 +29,6 @@ public:
     void print_project(const uint32_t& v_depth);
 
 private:
-
     /// <summary>
     /// will print the table in recursif
     /// </summary>
